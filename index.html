@@ -124,6 +124,37 @@ h1{font-family:var(--serif);font-weight:700;font-size:32px;color:var(--text);mar
 /* Add plant header btn */
 .header-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
 </style>
+<script>
+window.onerror = function(msg, src, line, col, err) {
+  var d = document.getElementById('debug');
+  if (!d) { d = document.createElement('div'); d.id = 'debug';
+    d.style = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#c0392b;color:#fff;padding:12px;font-family:monospace;font-size:12px;white-space:pre-wrap;max-height:200px;overflow:auto';
+    document.body.appendChild(d); }
+  d.textContent += 'ERRO linha ' + line + ': ' + msg + '\n';
+};
+window.onunhandledrejection = function(e) {
+  var d = document.getElementById('debug');
+  if (!d) { d = document.createElement('div'); d.id = 'debug';
+    d.style = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#c0392b;color:#fff;padding:12px;font-family:monospace;font-size:12px;white-space:pre-wrap;max-height:200px;overflow:auto';
+    document.body.appendChild(d); }
+  d.textContent += 'PROMISE: ' + (e.reason?.message || e.reason) + '\n';
+};
+document.addEventListener('DOMContentLoaded', function() {
+  var d = document.createElement('div');
+  d.style = 'position:fixed;top:0;left:0;right:0;z-index:9998;background:#2F4A34;color:#fff;padding:6px 12px;font-family:monospace;font-size:11px;text-align:center';
+  d.textContent = 'A carregar...';
+  d.id = 'loading';
+  document.body.appendChild(d);
+  setTimeout(function() {
+    var l = document.getElementById('loading');
+    var paper = document.getElementById('paper');
+    if (l) {
+      if (paper && paper.children.length > 0) { l.remove(); }
+      else { l.style.background = '#c0621e'; l.textContent = 'JS carregou mas render() falhou — ver erro acima'; }
+    }
+  }, 3000);
+});
+</script>
 </head>
 <body>
 <div class="app" id="app">
