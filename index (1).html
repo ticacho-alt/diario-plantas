@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#EDE6D6">
+<title>Diário de Plantas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+html,body{height:100%;overscroll-behavior-y:contain;background:#EDE6D6}
+#root{min-height:100vh;min-height:100dvh}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+// Carregar React com fallbacks
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = resolve;
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+async function loadReact() {
+  const sources = [
+    ['https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js',
+     'https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js'],
+    ['https://unpkg.com/react@18.2.0/umd/react.production.min.js',
+     'https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js'],
+    ['https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js',
+     'https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js'],
+  ];
+  for (const [r, rd] of sources) {
+    try {
+      await loadScript(r);
+      await loadScript(rd);
+      console.log('React carregado de:', r);
+      return true;
+    } catch(e) {
+      console.warn('Falhou:', r, e);
+    }
+  }
+  document.getElementById('root').innerHTML = '<div style="padding:40px;font-family:sans-serif;text-align:center"><h2>Erro ao carregar</h2><p>Verifica a ligação à internet e recarrega a página.</p></div>';
+  return false;
+}
+loadReact().then(ok => { if(ok) { const s=document.getElementById('app-script'); if(s) s.style.display='none'; window._reactReady=true; initApp(); } });
+</script>
+<script>
+function initApp() {
+const {useState,useEffect,useRef,useMemo,Children,cloneElement,createElement}=React;
+
+function Leaf({size=24,strokeWidth=1.5,color,style:{}}) {
+  return React.createElement('svg',{width:size,height:size,viewBox:'0 0 24 24',fill:'none',stroke:color||'currentColor',strokeWidth:strokeWidth,strokeLinecap:'round',strokeLinejoin:'round',style:{display:'inline-block',verticalAlign:'middle',...style}},React.createElement('path',{d:'M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12'}));
+}
+function Droplet({size=24,strokeWidth=1.5,color,style:{}}) {
+  return React.createElement('svg',{width:size,height:size,viewBox:'0 0 24 24',fill:'none',stroke:color||'currentColor',strokeWidth:strokeWidth,strokeLinecap:'round',strokeLinejoin:'round',style:{display:'inline-block',verticalAlign:'middle',...style}},React.createElement('path',{d:'M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z'}));
+}
+function Sun({size=24,strokeWidth=1.5,color,style:{}}) {
+  return React.createElement('svg',{width:size,height:size,viewBox:'0 0 24 24',fill:'none',stroke:color||'currentColor',strokeWidth:strokeWidth,strokeLinecap:'round',strokeLinejoin:'round',style:{display:'inline-block',verticalAlign:'middle',...style}},React.createElement('path',{d:'M12 8a4 4 0 0 0 0 8m0-8a4 4 0 0 1 0 8m0-8V2m0 14v4M4.93 4.93l2.83 2.83m8.48 8.48 2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48 2.83-2.83'}));
+}
+function Camera({size=24,strokeWidth=1.5,color,style:{}}) {
+  return React.createElement('svg',{width:size,height:size,viewBox:'0 0 24 24',fill:'none',stroke:color||'currentColor',strokeWidth:strokeWidth,strokeLinecap:'round',strokeLinejoin:'round',style:{display:'inline-block',verticalAlign:'middle',...style}},React.createElement('path',{d:'M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z M12 13m-3 0a3 3 0 1 0 6 0a3 3 0 1 0-6 0'}));
+}
+function Plus({size=24,strokeWidth=1.5,color,style:{}}) {
+  return React.createElement('svg',{width:size,height:size,viewBox:'0 0 24 24',fill:'none',stroke:color||'currentColor',strokeWidth:strokeWidth,strokeLinecap:'round',strokeLinejoin:'round',style:{display:'inline-block',verticalAlign:'middle',...style}},React.createElement('path',{d:'M5 12h14M12 5v14'}));
+}
+function ArrowLeft({size=24,strokeWidth=1.5,color,style:{}}) {
+  return React.createElement('svg',{width:size,height:size,viewBox:'0 0 24 24',fill:'none',stroke:color||'currentColor',strokeWidth:strokeWidth,strokeLinecap:'round',strokeLinejoin:'round',style:{display:'inline-block',verticalAlign:'middle',...style}},React.createElement('path',{d:'M12 19-7-7 7-7M19 12H5'}));
+}
+function Search({size=24,strokeWidth=1.5,color,style:{}}) {
+  return React.createElement('svg',{width:size,height:size,viewBox:'0 0 24 24',fill:'none',stroke:color||'currentColor',strokeWidth:strokeWidth,strokeLinecap:'round',strokeLinejoin:'round',style:{display:'inline-block',verticalAlign:'middle',...style}},React.createElement('path',{d:'M21 21l-4.35-4.35 M11 19A8 8 0 1 0 11 3a8 8 0 0 0 0 16z'}));
+}
+function Trash2({size=24,strokeWidth=1.5,color,style:{}}) {
+  return React.createElement('svg',{width:size,height:size,viewBox:'0 0 24 24',fill:'none',stroke:color||'currentColor',strokeWidth:strokeWidth,strokeLinecap:'round',strokeLinejoin:'round',style:{display:'inline-block',verticalAlign:'middle',...style}},React.createElement('path',{d:'M3 6h18M19 6l-1 14H6L5 6M8 6V4h8v2M10 11v6M14 11v6'}));
+}
+function Sprout({size=24,strokeWidth=1.5,color,style:{}}) {
+  return React.createElement('svg',{width:size,height:size,viewBox:'0 0 24 24',fill:'none',stroke:color||'currentColor',strokeWidth:strokeWidth,strokeLinecap:'round',strokeLinejoin:'round',style:{display:'inline-block',verticalAlign:'middle',...style}},React.createElement('path',{d:'M7 20h10M10 20c5.5-2.5.8-6.4 3-10M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8zM14.1 6a7 7 0 0 1 1 4.1C13 9.1 11.7 8 11 7c-.7-1.1-.9-2.4-.3-4.5 2.8.5 4.1 2 3.4 3.5z'}));
+}
+function ShoppingCart({size=24,strokeWidth=1.5,color,style:{}}) {
+  return React.createElement('svg',{width:size,height:size,viewBox:'0 0 24 24',fill:'none',stroke:color||'currentColor',strokeWidth:strokeWidth,strokeLinecap:'round',strokeLinejoin:'round',style:{display:'inline-block',verticalAlign:'middle',...style}},React.createElement('path',{d:'M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z M3 6h18 M16 10a4 4 0 0 1-8 0'}));
+}
+function Package({size=24,strokeWidth=1.5,color,style:{}}) {
+  return React.createElement('svg',{width:size,height:size,viewBox:'0 0 24 24',fill:'none',stroke:color||'currentColor',strokeWidth:strokeWidth,strokeLinecap:'round',strokeLinejoin:'round',style:{display:'inline-block',verticalAlign:'middle',...style}},React.createElement('path',{d:'M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16zM3.27 6.96 12 12.01l8.73-5.05M12 22.08V12'}));
+}
+function Thermometer({size=24,strokeWidth=1.5,color,style:{}}) {
+  return React.createElement('svg',{width:size,height:size,viewBox:'0 0 24 24',fill:'none',stroke:color||'currentColor',strokeWidth:strokeWidth,strokeLinecap:'round',strokeLinejoin:'round',style:{display:'inline-block',verticalAlign:'middle',...style}},React.createElement('path',{d:'M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z'}));
+}
+function Wind({size=24,strokeWidth=1.5,color,style:{}}) {
+  return React.createElement('svg',{width:size,height:size,viewBox:'0 0 24 24',fill:'none',stroke:color||'currentColor',strokeWidth:strokeWidth,strokeLinecap:'round',strokeLinejoin:'round',style:{display:'inline-block',verticalAlign:'middle',...style}},React.createElement('path',{d:'M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2M9.6 4.6A2 2 0 1 1 11 8H2M12.6 19.4A2 2 0 1 0 14 16H2'}));
+}
+function Check({size=24,strokeWidth=1.5,color,style:{}}) {
+  return React.createElement('svg',{width:size,height:size,viewBox:'0 0 24 24',fill:'none',stroke:color||'currentColor',strokeWidth:strokeWidth,strokeLinecap:'round',strokeLinejoin:'round',style:{display:'inline-block',verticalAlign:'middle',...style}},React.createElement('path',{d:'M20 6 9 17l-5-5'}));
+}
+function X({size=24,strokeWidth=1.5,color,style:{}}) {
+  return React.createElement('svg',{width:size,height:size,viewBox:'0 0 24 24',fill:'none',stroke:color||'currentColor',strokeWidth:strokeWidth,strokeLinecap:'round',strokeLinejoin:'round',style:{display:'inline-block',verticalAlign:'middle',...style}},React.createElement('path',{d:'M18 6 6 18M6 6l12 12'}));
+}
+function Settings({size=24,strokeWidth=1.5,color,style:{}}) {
+  return React.createElement('svg',{width:size,height:size,viewBox:'0 0 24 24',fill:'none',stroke:color||'currentColor',strokeWidth:strokeWidth,strokeLinecap:'round',strokeLinejoin:'round',style:{display:'inline-block',verticalAlign:'middle',...style}},React.createElement('path',{d:'M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z'}));
+}
+
+
+
+// Recharts shim — implementação simples compatível com a API usada na app
+function ResponsiveContainer({width, height, children}) {
+  const ref = React.useRef(null);
+  const [w, setW] = React.useState(300);
+  React.useEffect(() => {
+    if (!ref.current) return;
+    const ro = new ResizeObserver(([e]) => setW(e.contentRect.width));
+    ro.observe(ref.current);
+    return () => ro.disconnect();
+  }, []);
+  return React.createElement('div', {ref, style:{width:'100%',height}},
+    React.cloneElement(React.Children.only(children), {width:w, height})
+  );
+}
+
+function LineChart({data=[], children, width=300, height=200, margin={top:5,right:5,bottom:5,left:5}}) {
+  const childArr = React.Children.toArray(children);
+  const lines = childArr.filter(c => c.type === Line);
+  const xAxis = childArr.find(c => c.type === XAxis);
+  const tooltipEl = childArr.find(c => c.type === Tooltip);
+
+  const mt=margin.top||5, mr=margin.right||5, mb=margin.bottom||30, ml=margin.left||36;
+  const W = width-ml-mr, H = height-mt-mb;
+
+  // Calcular domínios
+  const allVals = lines.flatMap(l => data.map(d => d[l.props.dataKey]).filter(v => v!=null));
+  const minV = allVals.length ? Math.min(...allVals) : 0;
+  const maxV = allVals.length ? Math.max(...allVals) : 100;
+  const padV = (maxV - minV) * 0.1 || 5;
+  const lo = minV - padV, hi = maxV + padV;
+
+  const px = (i) => ml + (i / Math.max(data.length-1,1)) * W;
+  const py = (v, lo2, hi2) => mt + H - ((v-lo2)/(hi2-lo2||1)) * H;
+
+  // Separar linhas por yAxisId para eixos distintos
+  const yAxes = {};
+  lines.forEach(l => {
+    const id = l.props.yAxisId || 'left';
+    if (!yAxes[id]) yAxes[id] = {min:Infinity,max:-Infinity,lines:[]};
+    data.forEach(d => { const v=d[l.props.dataKey]; if(v!=null){yAxes[id].min=Math.min(yAxes[id].min,v);yAxes[id].max=Math.max(yAxes[id].max,v);} });
+    yAxes[id].lines.push(l);
+  });
+  Object.values(yAxes).forEach(ax => {
+    const p=(ax.max-ax.min)*0.15||5; ax.lo=ax.min-p; ax.hi=ax.max+p;
+  });
+
+  const [tooltip, setTooltip] = React.useState(null);
+
+  const svgLines = lines.map((l,li) => {
+    const key = l.props.dataKey;
+    const color = l.props.stroke || '#4b5e42';
+    const sw = l.props.strokeWidth || 2;
+    const axId = l.props.yAxisId || 'left';
+    const ax = yAxes[axId] || {lo,hi};
+    const pts = data.map((d,i) => d[key]!=null ? `${px(i).toFixed(1)},${py(d[key],ax.lo,ax.hi).toFixed(1)}` : null);
+    // Split at nulls
+    let path = ''; let started = false;
+    pts.forEach((p,i) => {
+      if (!p) { started=false; return; }
+      path += started ? ` L${p}` : ` M${p}`;
+      started = true;
+    });
+    const dots = data.map((d,i) => d[key]!=null ?
+      React.createElement('circle',{key:i,cx:px(i),cy:py(d[key],ax.lo,ax.hi),r:3,fill:color,stroke:'#fff',strokeWidth:1}) : null
+    );
+    return React.createElement('g',{key:li},
+      React.createElement('path',{d:path,fill:'none',stroke:color,strokeWidth:sw,strokeLinecap:'round',strokeLinejoin:'round'}),
+      ...dots
+    );
+  });
+
+  // X labels — mostrar 3 labels
+  const xLabels = data.length > 0 ? [0, Math.floor(data.length/2), data.length-1].filter((v,i,a)=>a.indexOf(v)===i).map(i =>
+    React.createElement('text',{key:i,x:px(i),y:height-mb+14,textAnchor:'middle',fontSize:9,fill:'#6b7a5f',fontFamily:'monospace'},
+      (data[i]?.label||'').slice(-5))
+  ) : [];
+
+  return React.createElement('svg',{
+    width,height,
+    onMouseMove: e => {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const mx = e.clientX - rect.left - ml;
+      const idx = Math.round((mx/W)*(data.length-1));
+      if (idx>=0 && idx<data.length) setTooltip({idx,x:px(idx),d:data[idx]});
+    },
+    onMouseLeave: () => setTooltip(null)
+  },
+    // Grid lines
+    [0,0.25,0.5,0.75,1].map((t,i) =>
+      React.createElement('line',{key:i,x1:ml,x2:ml+W,y1:mt+H*t,y2:mt+H*t,stroke:'#e4e2cf',strokeWidth:0.5})
+    ),
+    ...svgLines,
+    ...xLabels,
+    // Tooltip
+    tooltip && React.createElement('g',{key:'tip'},
+      React.createElement('line',{x1:tooltip.x,x2:tooltip.x,y1:mt,y2:mt+H,stroke:'#c7c4a8',strokeWidth:1,strokeDasharray:'3 2'}),
+      React.createElement('rect',{x:tooltip.x+6,y:mt,width:90,height:lines.length*16+10,rx:4,fill:'#F8F4E7',stroke:'#d8d4bd',strokeWidth:1}),
+      lines.map((l,li) => {
+        const v=tooltip.d[l.props.dataKey];
+        return v!=null ? React.createElement('text',{key:li,x:tooltip.x+12,y:mt+14+li*16,fontSize:10,fill:l.props.stroke,fontFamily:'monospace'},
+          `${l.props.name||l.props.dataKey}: ${v}`) : null;
+      })
+    )
+  );
+}
+
+function Line(props) { return null; }
+function XAxis(props) { return null; }
+function YAxis(props) { return null; }
+function Tooltip(props) { return null; }
+function Legend(props) { return null; }
+
+
+
+const RAW_PLANTS = [
+  ["Alocasia 'Polly'","Europlantas","2026-07-19",2,"Luz Indireta Bright","Rega Moderada (Solo húmido, não encharcado)","SIRO Interior","Sensível a correntes de ar frio.", "60-80%", "18-30°C", "https://www.picturethisai.com/pt/care/Alocasia__Polly_.html"],
+  ["Alocasia Frydek","Viveiros Cultiflor","2026-08-02",5.95,"Luz Indireta Intensa","Rega Moderada (Solo ligeiramente húmido)","SIRO Interior","Encomenda Cultiflor ZPSFGCGHV", "60-80%", "18-30°C", "https://www.picturethisai.com/pt/care/Alocasia_micholitziana__Frydek_.html"],
+  ["Alocasia Frydek Variegata - V.6","Europlantas","2026-07-19",8.4,"Luz Indireta Intensa","Rega Moderada (Atenção ao encharcamento)","SIRO Interior","Folha aveludada com manchas brancas.", "60-80%", "18-30°C", "https://www.picturethisai.com/pt/care/Alocasia_micholitziana__Frydek_.html"],
+  ["Alocasia macrorrhiza \"Splash\"","Viveiros Cultiflor","2026-08-02",7.95,"Luz Indireta Intensa","Rega Moderada (Solo húmido drenado)","SIRO Interior","Encomenda Cultiflor ZPSFGCGHV","60-80%","18-30°C", "https://www.picturethisai.com/pt/care/Alocasia_macrorrhiza.html"],
+  ["Amydrium medium 'Silver'","Viveiros Cultiflor","2026-07-13",4.95,"Luz Indireta Moderada","Rega Moderada","SIRO Interior","Tom prateado característico.", "60-80%", "18-30°C", "https://www.picturethisai.com/pt/care/Amydrium_medium.html"],
+  ["Anthurium \"Lilli\"","Viveiros Cultiflor","2026-07-24",6.95,"Luz Indireta Forte","Rega Moderada (Manter solo ligeiramente húmido)","SIRO Interior (solo drenante)","Floração rosa/avermelhada compacta.","60-80%","18-30°C", "https://www.picturethisai.com/pt/care/Anthurium_andraeanum.html"],
+  ["Anthurium 'Magnificum' V.12","Europlantas","2026-07-19",4,"Luz Indireta Difusa","Rega Moderada (Humidade alta)","SIRO Interior (solo drenante)","Folhas aveludadas de grande porte.", "60-80%", "18-30°C", "https://www.picturethisai.com/pt/care/Anthurium_magnificum.html"],
+  ["Anthurium 'Villenaorum'","Europlantas","2026-07-19",2.8,"Luz Indireta Difusa","Rega Moderada","SIRO Interior (solo drenante)","Nervuras brancas proeminentes.", "60-80%", "18-30°C", "https://www.picturethisai.com/pt/care/Anthurium_villenaorum.html"],
+  ["Anthurium peltigerum Baby","Viveiros Cultiflor","2026-07-13",4.95,"Luz Indireta Moderada","Rega Moderada","SIRO Interior (solo drenante)","Espécie rara e colecionável.", "60-80%", "18-30°C", "https://www.picturethisai.com/pt/care/Anthurium_peltigerum.html"],
+  ["Anthurium veitchii Baby","Viveiros Cultiflor","2026-07-13",4.95,"Luz Indireta Bright","Rega Moderada (Substrato Aerado)","SIRO Interior (solo drenante)","King Anthurium; folha plissada.", "60-80%", "18-30°C", "https://www.picturethisai.com/pt/care/Anthurium_veitchii.html"],
+  ["Anthurium warocqueanum Baby","Viveiros Cultiflor","2026-07-13",4.95,"Luz Indireta Difusa","Rega Frequente (Substrato Aerado)","SIRO Interior (solo drenante)","Rain Anthurium; exige humidade elevada (>70%).", "60-80%", "18-30°C", "https://www.picturethisai.com/pt/care/Anthurium_warocqueanum.html"],
+  ["Aucuba japonica 'Variegata'","Viveiros Cultiflor","2026-06-07",3.5,"Sombra / Luz Indireta Suave","Rega Moderada","SIRO Interior","Planta exterior/interior muito resistente.", "40-60%", "5-20°C", "https://www.picturethisai.com/pt/care/Aucuba_japonica__Variegata_.html"],
+  ["Caladium 'White Wonder'","Viveiros Cultiflor","2026-06-07",8.95,"Luz Indireta Intensa","Rega Moderada (Solo húmido na estação)","SIRO Interior","Tubérculo; entra em dormência no inverno.", "60-80%", "18-28°C", "https://www.picturethisai.com/pt/care/Caladium_bicolor.html"],
+  ["Calathea Yellow Fusion (1 de 2)","Viveiros Cultiflor","2026-06-07",1.95,"Luz Indireta / Difusa","Rega Frequente (Manter solo húmido)","SIRO Interior","Exige humidade elevada; evitar luz direta.", "60-80%", "16-27°C", "https://www.picturethisai.com/pt/care/Calathea_hybrid.html"],
+  ["Calathea Yellow Fusion (2 de 2)","Viveiros Cultiflor","2026-06-07",1.95,"Luz Indireta / Difusa","Rega Frequente (Manter solo húmido)","SIRO Interior","Exige humidade elevada; evitar luz direta.", "60-80%", "16-27°C", "https://www.picturethisai.com/pt/care/Calathea_hybrid.html"],
+  ["Chlorophytum comosum variegata Baby","Viveiros Cultiflor","2026-08-02",1.5,"Luz Indireta Moderada","Rega Moderada (Deixar secar topo)","SIRO Interior","Encomenda Cultiflor ZPSFGCGHV", "40-60%", "15-28°C", "https://www.picturethisai.com/pt/care/Chlorophytum_comosum__Variegatum_.html"],
+  ["Colmanara 'Black Cat'","Viveiros Cultiflor","2026-06-07",9.95,"Luz Indireta Intensa","Rega Moderada","OrchidPon ou SIRO Epífitas","Orquídea híbrida (Oncidium alliance) de flores escuras.", "50-70%", "13-28°C", "https://www.picturethisai.com/pt/care/Oncidium_Sharry_Baby.html"],
+  ["Crassula 'Buddha's Temple'","Viveiros Cultiflor","2026-06-07",1,"Sol Direto / Luz Intensa","Rega Espaçada (Secar totalmente)","SIRO Cactos e Suculentas","Suculenta com geometria única em forma de templo.", "20-40%", "10-24°C", "https://www.picturethisai.com/pt/care/Crassula__Buddha_s_Temple_.html"],
+  ["Dendrobium Nobile (Sem Flor)","Europlantas","2026-07-19",1.5,"Luz Indireta Intensa / Sol Matinal","Rega Moderada (Substrato de Orquídea)","OrchidPon ou SIRO Epífitas","Período de descanso no inverno.", "50-70%", "10-28°C", "https://www.picturethisai.com/pt/care/Dendrobium_nobile.html"],
+  ["Hoya kerrii variegata","Viveiros Cultiflor","2026-07-13",3.5,"Luz Indireta Intensa / Sol Suave","Rega Espaçada (Secar totalmente)","SIRO Interior (bem drenado)","Suculenta; cuidado com excesso de água.", "40-60%", "15-30°C", "https://www.picturethisai.com/pt/care/Hoya_kerrii__Variegata_.html"],
+  ["Malpighia Emarginata Bonsai (5 anos)","Luso Bonsai","2026-06-10",14.9,"Luz Intensa / Sol Direto Matinal","Rega Frequente (Diária em tempo quente)","SIRO Bonsai ou SIRO Plant","Acerola Bonsai; floresce e dá pequenos frutos.", "50-70%", "15-30°C", "https://www.picturethisai.com/pt/care/Malpighia_emarginata.html"],
+  ["Maranta leuconeura 'Kerchoveana' Baby","Viveiros Cultiflor","2026-07-13",1.5,"Luz Indireta / Difusa","Rega Frequente (Solo Húmido)","SIRO Interior","Mantenha a humidade alta.", "60-80%", "16-27°C", "https://www.picturethisai.com/pt/care/Maranta_leuconeura__Kerchoveana_.html"],
+  ["Monstera adansonii 'Frozen Freckles' Baby","Viveiros Cultiflor","2026-07-13",8.95,"Luz Indireta Intensa","Rega Moderada","SIRO Interior","Variegata fenestrada.", "60-80%", "15-30°C", "https://www.picturethisai.com/pt/care/Monstera_adansonii.html"],
+  ["Monstera deliciosa Baby (1 de 3)","Viveiros Cultiflor","2026-07-24",1.5,"Luz Indireta Intensa","Rega Moderada (Deixar secar topo)","SIRO Interior","Encomenda Cultiflor TVGCOOHFS", "60-80%", "15-30°C", "https://www.picturethisai.com/pt/care/Monstera_deliciosa.html"],
+  ["Monstera deliciosa Baby (2 de 3)","Viveiros Cultiflor","2026-07-24",1.5,"Luz Indireta Intensa","Rega Moderada (Deixar secar topo)","SIRO Interior","Encomenda Cultiflor TVGCOOHFS", "60-80%", "15-30°C", "https://www.picturethisai.com/pt/care/Monstera_deliciosa.html"],
+  ["Monstera deliciosa Baby (3 de 3)","Viveiros Cultiflor","2026-07-24",1.5,"Luz Indireta Intensa","Rega Moderada (Deixar secar topo)","SIRO Interior","Encomenda Cultiflor TVGCOOHFS", "60-80%", "15-30°C", "https://www.picturethisai.com/pt/care/Monstera_deliciosa.html"],
+  ["Oncidium Amarelo","Europlantas","2026-07-19",2.8,"Luz Indireta Intensa","Rega Moderada","OrchidPon ou SIRO Epífitas","Conhecida como orquídea 'Dançarina'.", "50-70%", "13-28°C", "https://www.picturethisai.com/pt/care/Oncidium_sphacelatum.html"],
+  ["Oncidium Titanium V.9","Europlantas","2026-07-19",4.2,"Luz Indireta Intensa","Rega Moderada","OrchidPon ou SIRO Epífitas","Substrato leve e bem drenado.", "50-70%", "13-28°C", "https://www.picturethisai.com/pt/care/Oncidium_sphacelatum.html"],
+  ["Peperomia 'Pepperspot'","Viveiros Cultiflor","2026-07-13",2.75,"Luz Indireta Forte","Rega Moderada (Secar parcialmente)","SIRO Interior","Suspensa ou trepadeira.", "40-60%", "15-26°C", "https://www.picturethisai.com/pt/care/Peperomia_rotundifolia.html"],
+  ["Phalaenopsis (Sem Flor - V.12)","Europlantas","2026-07-19",2,"Luz Indireta Moderada","Rega Semanal (Substrato de Casca)","OrchidPon ou SIRO Epífitas","Garante boas raízes antes do fertilizante.", "50-70%", "15-30°C", "https://www.picturethisai.com/pt/care/Phalaenopsis_amabilis.html"],
+  ["Phalaenopsis - Dark Splash","Viveiros Cultiflor","2026-06-07",8.95,"Luz Indireta Moderada","Rega Semanal","OrchidPon ou SIRO Epífitas","Orquídea Phalaenopsis com padrão salpicado escuro.", "50-70%", "15-30°C", "https://www.picturethisai.com/pt/care/Phalaenopsis_amabilis.html"],
+  ["Phalaenopsis - Inti Sun","Viveiros Cultiflor","2026-06-07",7.5,"Luz Indireta Moderada","Rega Semanal (Deixar secar substrato)","OrchidPon ou SIRO Epífitas","Orquídea com floração tom amarelo/sol.", "50-70%", "15-30°C", "https://www.picturethisai.com/pt/care/Phalaenopsis_amabilis.html"],
+  ["Phalaenopsis Fantasy Script","Viveiros Cultiflor","2026-06-07",7.5,"Luz Indireta Moderada","Rega Semanal","OrchidPon ou SIRO Epífitas","Orquídea Phalaenopsis com padrão único.", "50-70%", "15-30°C", "https://www.picturethisai.com/pt/care/Phalaenopsis_amabilis.html"],
+  ["Philodendron 'Birkin'","Viveiros Cultiflor","2026-06-07",3.95,"Luz Indireta Intensa","Rega Moderada (Secar topo do solo)","SIRO Interior","Folhagem com riscas brancas características.", "60-80%", "16-30°C", "https://www.picturethisai.com/pt/care/Philodendron__Birkin_.html"],
+  ["Philodendron 'Neon' (1 de 3)","Viveiros Cultiflor","2026-07-13",3.5,"Luz Indireta a Média","Rega Moderada","SIRO Interior","Crescimento rápido e folhagem vibrante.", "60-80%", "16-30°C", "https://www.picturethisai.com/pt/care/Philodendron_hederaceum__Lemon_Lime_.html"],
+  ["Philodendron 'Neon' (2 de 3)","Viveiros Cultiflor","2026-07-13",3.5,"Luz Indireta a Média","Rega Moderada","SIRO Interior","Crescimento rápido e folhagem vibrante.", "60-80%", "16-30°C", "https://www.picturethisai.com/pt/care/Philodendron_hederaceum__Lemon_Lime_.html"],
+  ["Philodendron 'Neon' (3 de 3)","Viveiros Cultiflor","2026-07-13",3.5,"Luz Indireta a Média","Rega Moderada","SIRO Interior","Crescimento rápido e folhagem vibrante.", "60-80%", "16-30°C", "https://www.picturethisai.com/pt/care/Philodendron_hederaceum__Lemon_Lime_.html"],
+  ["Philodendron 'Red Anderson' Baby","Viveiros Cultiflor","2026-07-13",4.95,"Luz Indireta Intensa","Rega Moderada","SIRO Interior","Cores vermelhas e brancas nas folhas.", "60-80%", "16-30°C", "https://www.picturethisai.com/pt/care/Philodendron_hederaceum.html"],
+  ["Philodendron 'White Princess' Baby","Viveiros Cultiflor","2026-07-13",3.95,"Luz Indireta Intensa","Rega Moderada (Deixar secar topo)","SIRO Interior","Variegação requer boa luminosidade.", "60-80%", "16-30°C", "https://www.picturethisai.com/pt/care/Philodendron__White_Princess_.html"],
+  ["Pilea peperomioides","Viveiros Cultiflor","2026-08-02",3.95,"Luz Indireta Intensa","Rega Moderada (Deixar secar entre regas)","SIRO Interior","Encomenda Cultiflor ZPSFGCGHV", "40-60%", "13-28°C", "https://www.picturethisai.com/pt/care/Pilea_peperomioides.html"],
+  ["Rhaphidophora puberula Variegata Baby","Viveiros Cultiflor","2026-07-13",4.95,"Luz Indireta Intensa","Rega Moderada","SIRO Interior","Necessita de tutor para trepar.", "60-80%", "18-30°C", "https://www.picturethisai.com/pt/care/Rhaphidophora_tetrasperma.html"],
+  ["Saxifraga stolonifera 'Tricolor' Baby","Viveiros Cultiflor","2026-07-13",2.45,"Luz Indireta Moderada","Rega Moderada (Deixar secar topo)","SIRO Interior","Evitar água nas folhas.", "40-60%", "10-24°C", "https://www.picturethisai.com/pt/care/Saxifraga_stolonifera__Tricolor_.html"],
+];
+
+const slugify = (s) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"");
+const PLANTS = [...RAW_PLANTS].sort((a,b)=>a[0].localeCompare(b[0],"pt-PT",{sensitivity:"base"})).map((p,i)=>({id:slugify(p[0]),num:String(i+1).padStart(3,"0"),name:p[0],store:p[1],date:p[2],price:p[3],light:p[4],watering:p[5],soil:p[6],notes:p[7],humidity:p[8],tempRange:p[9],url:p[10]}));
+
+(function migrateIds(){try{if(localStorage.getItem("ids-migrated-v2"))return;RAW_PLANTS.forEach((p,i)=>{const oldId=slugify(p[0])+"-"+i,newId=slugify(p[0]);if(oldId===newId)return;["photos:","dead:","gifted:"].forEach(prefix=>{const val=localStorage.getItem(prefix+oldId);if(val!==null){if(!localStorage.getItem(prefix+newId))localStorage.setItem(prefix+newId,val);localStorage.removeItem(prefix+oldId);}});});localStorage.setItem("ids-migrated-v2","1");}catch(e){}})();
+
+const TOTAL = PLANTS.reduce((acc,p)=>acc+p.price,0);
+const lightGroup = (light)=>{const l=light.toLowerCase();if(l.includes("sol direto")||l.includes("sol matinal")||l.includes("intensa"))return"Muita luz";if(l.includes("sombra")||l.includes("suave"))return"Pouca luz";return"Luz indireta";};
+const fmtDate = (iso)=>new Date(iso+"T00:00:00").toLocaleDateString("pt-PT",{day:"2-digit",month:"short",year:"numeric"});
+const fmtDateTime = (iso)=>new Date(iso).toLocaleString("pt-PT",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"});
+
+const STOCK_ITEMS = [
+  {id:"siro-interior",name:"SIRO Interior 11L",note:"Substrato para plantas de interior",unitPrice:1.85},
+  {id:"siro-turfa",name:"SIRO Turfa 100 11L",note:"Base para misturas de substrato aerado",unitPrice:2.75},
+  {id:"siro-perlite",name:"SIRO Perlite 6L",note:"Para drenagem e aeração do solo",unitPrice:4.80},
+  {id:"siro-orquideas",name:"SIRO Orquídeas 11L",note:"Substrato específico para orquídeas",unitPrice:2.00},
+  {id:"siro-decor-gold",name:"SIRO Decor Gold 15-25mm 20L",note:"Casca decorativa",unitPrice:4.95},
+  {id:"musgo-sphagnum",name:"Musgo Sphagnum",note:"Enraizamento e retenção de humidade",unitPrice:3.50},
+  {id:"argila-expandida",name:"Argila Expandida 3L",note:"Drenagem para vasos",unitPrice:3.25},
+  {id:"orchidpon",name:"OrchidPon",note:"Substrato epífita para orquídeas e Hoya",unitPrice:null},
+];
+
+function loadStock(){try{const v=localStorage.getItem("stock-v1");return v?JSON.parse(v):{};}catch{return{};}}
+function saveStock(d){try{localStorage.setItem("stock-v1",JSON.stringify(d));}catch{}}
+
+// ---------------------------------------------------------------------------
+// Plantas adicionadas pelo utilizador (persistidas em localStorage)
+// ---------------------------------------------------------------------------
+function loadCustomPlants() {
+  try { const v=localStorage.getItem("custom-plants-v1"); return v?JSON.parse(v):[]; } catch { return []; }
+}
+function saveCustomPlants(arr) {
+  try { localStorage.setItem("custom-plants-v1",JSON.stringify(arr)); } catch {}
+}
+function loadReadings(){try{const v=localStorage.getItem("estufa-v1");return v?JSON.parse(v):[];}catch{return[];}}
+function saveReadings(d){try{localStorage.setItem("estufa-v1",JSON.stringify(d));}catch{}}
+
+const store={
+  async get(key){try{if(window.storage){const r=await window.storage.get(key,false);if(r&&r.value!=null)return JSON.parse(r.value);}}catch{}try{const v=localStorage.getItem(key);return v?JSON.parse(v):null;}catch{return null;}},
+  async set(key,value){const json=JSON.stringify(value);try{localStorage.setItem(key,json);}catch{}try{if(window.storage)await window.storage.set(key,json,false);}catch{}}
+};
+
+function compressImage(file,maxDim=800,quality=0.65){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=(e)=>{
+      const img=new Image();
+      img.onload=()=>{
+        let{width,height}=img;
+        if(width>height&&width>maxDim){height=Math.round(height*maxDim/width);width=maxDim;}
+        else if(height>maxDim){width=Math.round(width*maxDim/height);height=maxDim;}
+        const canvas=document.createElement("canvas");canvas.width=width;canvas.height=height;
+        canvas.getContext("2d").drawImage(img,0,0,width,height);
+        resolve(canvas.toDataURL("image/jpeg",quality));
+      };
+      img.onerror=reject;img.src=e.target.result;
+    };
+    reader.onerror=reject;reader.readAsDataURL(file);
+  });
+}
+
+function loadCoversSync(){
+  const covers={};
+  PLANTS.forEach(p=>{try{const v=localStorage.getItem("photos:"+p.id);if(v){const arr=JSON.parse(v);covers[p.id]=arr.length?arr[arr.length-1].dataUrl:null;}else covers[p.id]=null;}catch{covers[p.id]=null;}});
+  return covers;
+}
+
+
+function getGeminiKey() {
+  try { return localStorage.getItem("gemini-api-key") || ""; } catch { return ""; }
+}
+
+async function identifyPlantFromImage(base64) {
+  const key = getGeminiKey();
+  if (!key) throw new Error("Sem API key. Configura a Gemini API key nas definições.");
+
+  const body = {
+    contents: [{
+      parts: [
+        { inline_data: { mime_type: "image/jpeg", data: base64 } },
+        { text: "Identifica a especie desta planta. Responde so com JSON valido sem markdown: {name,scientific,light,watering,soil,humidity,tempRange,picturethis,notes}" }
+      ]
+    }],
+    generationConfig: { maxOutputTokens: 300, temperature: 0.1 }
+  };
+
+  const resp = await fetch(
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + key,
+    { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }
+  );
+  const data = await resp.json();
+  if (data.error) throw new Error("Gemini: " + (data.error.message || JSON.stringify(data.error)));
+  const text = (data.candidates?.[0]?.content?.parts?.[0]?.text) || "";
+  console.log("Gemini identify:", text);
+  const match = text.match(/\{[\s\S]*\}/);
+  if (!match) throw new Error("Sem JSON na resposta: " + text.slice(0, 100));
+  return JSON.parse(match[0]);
+}
+
+// ---------------------------------------------------------------------------
+// Modal para adicionar nova planta por foto
+// ---------------------------------------------------------------------------
+function AddPlantModal({onClose, onSave}) {
+  const [phase, setPhase] = useState("idle");
+  const [preview, setPreview] = useState(null);
+  const [form, setForm] = useState({
+    name:"", scientific:"", store:"", date:new Date().toISOString().slice(0,10),
+    price:"", light:"Luz Indireta Intensa", watering:"", soil:"SIRO Interior",
+    humidity:"", tempRange:"", notes:"", picturethis:""
+  });
+  const [error, setError] = useState(null);
+  const [apiLog, setApiLog] = useState("");
+
+  const LIGHT_OPTS = ["Luz Indireta Intensa","Luz Indireta Moderada","Luz Indireta Difusa",
+    "Luz Indireta Bright","Sol Direto / Luz Intensa","Sombra / Luz Indireta Suave",
+    "Luz Indireta a Media","Luz Indireta Forte"];
+
+  const handleFile = async (file) => {
+    if (!file) return;
+    setError(null); setApiLog(""); setPhase("scanning");
+    try {
+      // Comprimir agressivamente para minimizar tokens (512px, qualidade 0.5)
+      const dataUrl = await compressImage(file, 512, 0.5);
+      setPreview(dataUrl);
+      const base64 = dataUrl.split(",")[1];
+
+      const bodyObj = {
+        model: "claude-sonnet-4-6",
+        max_tokens: 300,
+        messages: [{
+          role: "user",
+          content: [
+            { type: "image", source: { type: "base64", media_type: "image/jpeg", data: base64 } },
+            { type: "text", text: "Que planta e esta? JSON only, no markdown: {\"name\":\"\",\"scientific\":\"\",\"light\":\"\",\"watering\":\"\",\"soil\":\"\",\"humidity\":\"\",\"tempRange\":\"\",\"picturethis\":\"picturethisai.com/pt/care/Nome.html\",\"notes\":\"\"}" }
+          ]
+        }]
+      };
+
+      const resp = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bodyObj)
+      });
+
+      const data = await resp.json();
+      const rawText = (data.content && data.content[0] && data.content[0].text) || "";
+      setApiLog(rawText.slice(0, 300));
+
+      if (data.error) throw new Error("API: " + (data.error.message || JSON.stringify(data.error)));
+
+      const match = rawText.match(/\{[\s\S]*\}/);
+      if (!match) throw new Error("Sem JSON na resposta. API disse: " + rawText.slice(0,100));
+
+      const result = JSON.parse(match[0]);
+      setForm(prev => ({
+        ...prev,
+        name:        result.name        || "",
+        scientific:  result.scientific  || "",
+        light:       result.light       || prev.light,
+        watering:    result.watering    || "",
+        soil:        result.soil        || "SIRO Interior",
+        humidity:    result.humidity    || "",
+        tempRange:   result.tempRange   || "",
+        notes:       result.notes       || "",
+        picturethis: result.picturethis || "",
+      }));
+      setPhase("confirm");
+    } catch(e) {
+      console.error("Identify error:", e);
+      setError("Erro ao identificar: " + e.message);
+      setPhase("manual");
+    }
+  };
+
+  const set = (k, v) => setForm(prev => ({...prev, [k]: v}));
+
+  const handleSave = () => {
+    if (!form.name.trim()) { setError("O nome da planta e obrigatorio."); return; }
+    const slug = form.name.toLowerCase().normalize("NFD")
+      .replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"");
+    onSave({
+      id: slug + "-" + Date.now().toString(36),
+      num: "X", name: form.name.trim(), scientific: form.scientific.trim(),
+      store: form.store.trim() || "Desconhecida", date: form.date,
+      price: parseFloat(form.price) || 0, light: form.light,
+      watering: form.watering.trim(), soil: form.soil.trim(),
+      humidity: form.humidity.trim(), tempRange: form.tempRange.trim(),
+      notes: form.notes.trim(), url: form.picturethis.trim(),
+      photo: preview, custom: true,
+    });
+  };
+
+  const inp = {
+    width:"100%", border:"1px solid #d8d4bd", borderRadius:"6px",
+    padding:"8px 10px", fontSize:"15px", fontFamily:"inherit",
+    background:"#fff", boxSizing:"border-box", color:"#223420"
+  };
+  const lbl = {
+    display:"block", fontFamily:"'IBM Plex Mono',monospace", fontSize:"10px",
+    textTransform:"uppercase", letterSpacing:"0.05em", color:"#8a8568", marginBottom:"3px"
+  };
+
+  return (
+    <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,0.6)",
+      display:"flex",flexDirection:"column",overflowY:"auto"}}>
+      <div style={{flex:"0 0 40px"}} onClick={onClose}/>
+      <div style={{background:"#EDE6D6",borderRadius:"16px 16px 0 0",flex:1,maxWidth:"520px",
+        width:"100%",margin:"0 auto",padding:"20px 16px 48px",overflowY:"auto"}}>
+
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"18px"}}>
+          <h2 style={{fontFamily:"'Fraunces',serif",fontSize:"22px",fontWeight:700,color:"#1f2e1a",margin:0}}>
+            Nova planta
+          </h2>
+          <button onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",
+            padding:"8px",color:"#6b7a5f",display:"flex",alignItems:"center"}}>
+            <X size={20} strokeWidth={2}/>
+          </button>
+        </div>
+
+        {phase==="idle" && (
+          <div style={{marginBottom:"20px"}}>
+            <p style={{fontSize:"13px",color:"#6b7a5f",margin:"0 0 14px",lineHeight:1.6}}>
+              Tira uma foto da planta e a IA identifica automaticamente.
+            </p>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"8px"}}>
+              <label htmlFor="add-plant-cam" style={{display:"flex",alignItems:"center",
+                justifyContent:"center",gap:"6px",background:"#2F4A34",color:"#F4EFDE",
+                borderRadius:"8px",padding:"14px 8px",fontSize:"13px",fontWeight:600,
+                cursor:"pointer",minHeight:"48px",fontFamily:"inherit",textAlign:"center"}}>
+                <Camera size={16} strokeWidth={2}/> Camera
+              </label>
+              <input id="add-plant-cam" type="file" accept="image/*" capture="environment"
+                style={{position:"absolute",opacity:0,width:1,height:1,pointerEvents:"none"}}
+                onChange={e=>handleFile(e.target.files && e.target.files[0])}/>
+              <label htmlFor="add-plant-gal" style={{display:"flex",alignItems:"center",
+                justifyContent:"center",gap:"6px",background:"#5c6b52",color:"#F4EFDE",
+                borderRadius:"8px",padding:"14px 8px",fontSize:"13px",fontWeight:600,
+                cursor:"pointer",minHeight:"48px",fontFamily:"inherit",textAlign:"center"}}>
+                <Plus size={16} strokeWidth={2}/> Galeria
+              </label>
+              <input id="add-plant-gal" type="file" accept="image/*"
+                style={{position:"absolute",opacity:0,width:1,height:1,pointerEvents:"none"}}
+                onChange={e=>handleFile(e.target.files && e.target.files[0])}/>
+              <button onClick={()=>setPhase("manual")} style={{display:"flex",alignItems:"center",
+                justifyContent:"center",background:"#F8F4E7",border:"1.5px solid #c7c4a8",
+                color:"#4b5e42",borderRadius:"8px",padding:"14px 8px",fontSize:"13px",
+                fontWeight:600,cursor:"pointer",minHeight:"48px",fontFamily:"inherit"}}>
+                Manual
+              </button>
+            </div>
+          </div>
+        )}
+
+        {phase==="scanning" && (
+          <div style={{textAlign:"center",padding:"40px 20px",background:"#F8F4E7",
+            border:"1px solid #d8d4bd",borderRadius:"8px",marginBottom:"20px",
+            fontFamily:"'IBM Plex Mono',monospace",fontSize:"13px",color:"#6b7a5f"}}>
+            A identificar a planta...
+          </div>
+        )}
+
+        {(phase==="confirm" || phase==="manual") && (
+          <div>
+            {preview && (
+              <img src={preview} alt="" style={{width:"100%",maxHeight:"160px",objectFit:"contain",
+                borderRadius:"8px",marginBottom:"12px",border:"1px solid #d8d4bd",display:"block"}}/>
+            )}
+            {error && (
+              <div style={{background:"#fff8ec",border:"1px solid #e0a339",borderRadius:"6px",
+                padding:"10px 12px",marginBottom:"12px",fontSize:"11px",color:"#8a5c00",
+                fontFamily:"'IBM Plex Mono',monospace",lineHeight:1.5,wordBreak:"break-word"}}>
+                {error}
+                {apiLog && <div style={{marginTop:"6px",opacity:0.8}}>Resposta: {apiLog}</div>}
+              </div>
+            )}
+            {phase==="confirm" && !error && (
+              <div style={{background:"#f0f4ee",border:"1px solid #93a97f",borderRadius:"6px",
+                padding:"9px 12px",marginBottom:"12px",fontSize:"11px",color:"#3a7a52",
+                fontFamily:"'IBM Plex Mono',monospace"}}>
+                Planta identificada. Confirma ou corrige os dados:
+              </div>
+            )}
+
+            <div style={{display:"flex",flexDirection:"column",gap:"10px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px"}}>
+                <div>
+                  <label style={lbl}>Nome *</label>
+                  <input style={inp} value={form.name} placeholder="Nome da planta"
+                    onChange={e=>set("name",e.target.value)}/>
+                </div>
+                <div>
+                  <label style={lbl}>Nome cientifico</label>
+                  <input style={inp} value={form.scientific} placeholder="Especie"
+                    onChange={e=>set("scientific",e.target.value)}/>
+                </div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 60px",gap:"8px"}}>
+                <div>
+                  <label style={lbl}>Loja</label>
+                  <input style={inp} value={form.store} placeholder="Origem"
+                    onChange={e=>set("store",e.target.value)}/>
+                </div>
+                <div>
+                  <label style={lbl}>Data</label>
+                  <input type="date" style={inp} value={form.date}
+                    onChange={e=>set("date",e.target.value)}/>
+                </div>
+                <div>
+                  <label style={lbl}>EUR</label>
+                  <input type="number" step="0.01" style={inp} value={form.price} placeholder="0"
+                    onChange={e=>set("price",e.target.value)}/>
+                </div>
+              </div>
+              <div>
+                <label style={lbl}>Luz</label>
+                <select style={{...inp,fontSize:"14px"}} value={form.light}
+                  onChange={e=>set("light",e.target.value)}>
+                  {LIGHT_OPTS.map(o=><option key={o}>{o}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={lbl}>Rega</label>
+                <input style={inp} value={form.watering} placeholder="ex: Rega moderada"
+                  onChange={e=>set("watering",e.target.value)}/>
+              </div>
+              <div>
+                <label style={lbl}>Substrato</label>
+                <input style={inp} value={form.soil} placeholder="ex: SIRO Interior"
+                  onChange={e=>set("soil",e.target.value)}/>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px"}}>
+                <div>
+                  <label style={lbl}>Humidade</label>
+                  <input style={inp} value={form.humidity} placeholder="ex: 60-80%"
+                    onChange={e=>set("humidity",e.target.value)}/>
+                </div>
+                <div>
+                  <label style={lbl}>Temperatura</label>
+                  <input style={inp} value={form.tempRange} placeholder="ex: 18-30C"
+                    onChange={e=>set("tempRange",e.target.value)}/>
+                </div>
+              </div>
+              <div>
+                <label style={lbl}>Observacoes</label>
+                <input style={inp} value={form.notes} placeholder="Nota util..."
+                  onChange={e=>set("notes",e.target.value)}/>
+              </div>
+              <div>
+                <label style={lbl}>PictureThis URL</label>
+                <input style={{...inp,fontSize:"11px"}} value={form.picturethis}
+                  placeholder="https://www.picturethisai.com/pt/care/..."
+                  onChange={e=>set("picturethis",e.target.value)}/>
+              </div>
+            </div>
+
+            <div style={{display:"flex",gap:"8px",marginTop:"18px"}}>
+              <button onClick={handleSave} style={{flex:1,background:"#2F4A34",color:"#F4EFDE",
+                border:"none",borderRadius:"8px",padding:"14px",fontSize:"15px",fontWeight:600,
+                cursor:"pointer",fontFamily:"inherit",minHeight:"48px",display:"flex",
+                alignItems:"center",justifyContent:"center",gap:"6px"}}>
+                <Check size={16} strokeWidth={2}/> Guardar planta
+              </button>
+              <button onClick={onClose} style={{background:"#F8F4E7",border:"1.5px solid #c7c4a8",
+                borderRadius:"8px",padding:"14px",cursor:"pointer",color:"#6b7a5f",
+                display:"flex",alignItems:"center",justifyContent:"center"}}>
+                <X size={16} strokeWidth={2}/>
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+// ---------------------------------------------------------------------------
+// Estufa — leitura automática por IA
+// ---------------------------------------------------------------------------
+async function extractReadingFromImage(base64) {
+  const key = getGeminiKey();
+  if (!key) throw new Error("Sem API key. Configura a Gemini API key nas definições.");
+
+  const body = {
+    contents: [{
+      parts: [
+        { inline_data: { mime_type: "image/jpeg", data: base64 } },
+        { text: "Le os valores de temperatura e humidade neste ecra de medicao. Responde so com JSON: {temp: numero, hum: numero}. Se nao conseguires ler usa null." }
+      ]
+    }],
+    generationConfig: { maxOutputTokens: 80, temperature: 0 }
+  };
+
+  const resp = await fetch(
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + key,
+    { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }
+  );
+  const data = await resp.json();
+  if (data.error) throw new Error("Gemini: " + (data.error.message || JSON.stringify(data.error)));
+  const text = (data.candidates?.[0]?.content?.parts?.[0]?.text) || "";
+  console.log("Gemini extract:", text);
+  const match = text.match(/\{[^}]+\}/);
+  if (!match) throw new Error("Sem JSON: " + text.slice(0, 80));
+  const result = JSON.parse(match[0]);
+  if (result.temp !== null && (result.temp < -10 || result.temp > 60)) result.temp = null;
+  if (result.hum  !== null && (result.hum  <   0 || result.hum  > 100)) result.hum  = null;
+  return result;
+}
+
+
+function EstufaPage() {
+  const [readings, setReadings] = useState(()=>loadReadings());
+  const [phase, setPhase] = useState("idle");
+  const [preview, setPreview] = useState(null);
+  const [extracted, setExtracted] = useState({temp:"",hum:""});
+  const [error, setError] = useState(null);
+  const [chartRange, setChartRange] = useState("7d");
+  const camRef = useRef(null);
+  const galRef = useRef(null);
+
+  const handleFile = async (file) => {
+    if (!file) return;
+    setError(null);
+    setPhase("scanning");
+    try {
+      const dataUrl = await compressImage(file, 600, 0.6);
+      const base64 = dataUrl.split(",")[1];
+      setPreview(dataUrl);
+      const result = await extractReadingFromImage(base64);
+      setExtracted({temp: result.temp ?? "", hum: result.hum ?? ""});
+      setPhase("confirm");
+    } catch(e) {
+      console.error("Erro na extracção:", e);
+      const msg = e?.message?.includes("API HTTP 429") ? "Limite de pedidos atingido — tenta daqui a pouco."
+                : e?.message?.includes("API HTTP 4") ? "Erro de autenticação com a API."
+                : "Não foi possível ler os valores automaticamente. Podes introduzi-los manualmente.";
+      setError(msg);
+      setPhase("manual");
+    }
+  };
+
+  const saveReading = () => {
+    const t = parseFloat(String(extracted.temp).replace(",","."));
+    const h = parseFloat(String(extracted.hum).replace(",","."));
+    if (isNaN(t) && isNaN(h)) { setError("Introduz pelo menos temperatura ou humidade."); return; }
+    const entry = {
+      id: Date.now().toString(36),
+      ts: new Date().toISOString(),
+      temp: isNaN(t) ? null : t,
+      hum: isNaN(h) ? null : h,
+      photo: preview,
+    };
+    const next = [entry, ...readings];
+    setReadings(next);
+    saveReadings(next);
+    setPhase("idle");
+    setPreview(null);
+    setExtracted({temp:"",hum:""});
+    setError(null);
+  };
+
+  const deleteReading = (id) => {
+    const next = readings.filter(r=>r.id!==id);
+    setReadings(next);
+    saveReadings(next);
+  };
+
+  const cancel = () => { setPhase("idle"); setPreview(null); setExtracted({temp:"",hum:""}); setError(null); };
+
+  const now = Date.now();
+  const rangMs = {"24h":86400000,"7d":7*86400000,"30d":30*86400000}[chartRange];
+  const chartData = [...readings]
+    .filter(r => now - new Date(r.ts).getTime() <= rangMs)
+    .reverse()
+    .map(r => ({label: fmtDateTime(r.ts), temp: r.temp, hum: r.hum}));
+
+  const last = readings[0];
+  const G = {fontSize:10, fontFamily:"'IBM Plex Mono',monospace", fill:"#6b7a5f"};
+
+  return (
+    <div>
+      <header style={{marginBottom:"24px"}}>
+        <div style={{display:"inline-flex",alignItems:"center",gap:"6px",fontFamily:"'IBM Plex Mono',monospace",fontSize:"11px",letterSpacing:"0.08em",textTransform:"uppercase",color:"#6b7a5f",marginBottom:"8px"}}>
+          <Thermometer size={13} strokeWidth={2}/> Mini Estufa
+        </div>
+        <h1 style={{fontFamily:"'Fraunces',serif",fontWeight:700,fontSize:"32px",color:"#1f2e1a",margin:"0 0 6px"}}>Estufa</h1>
+        <p style={{fontSize:"13.5px",color:"#6b7a5f",margin:0,fontFamily:"'IBM Plex Mono',monospace"}}>Temperatura &amp; humidade</p>
+      </header>
+
+      {last && (
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px",marginBottom:"20px"}}>
+          {[
+            {icon:<Thermometer size={18} strokeWidth={1.8}/>,val:last.temp!=null?`${last.temp}°C`:"—",label:"Temperatura",color:"#c0621e",bg:"#fff8ec",border:"#e07b39"},
+            {icon:<Wind size={18} strokeWidth={1.8}/>,val:last.hum!=null?`${last.hum}%`:"—",label:"Humidade",color:"#2F4A34",bg:"#f0f4ee",border:"#93a97f"},
+          ].map(k=>(
+            <div key={k.label} style={{background:k.bg,border:`1.5px solid ${k.border}`,borderRadius:"10px",padding:"16px 14px",textAlign:"center"}}>
+              <div style={{color:k.color,marginBottom:"6px",display:"flex",justifyContent:"center"}}>{k.icon}</div>
+              <span style={{display:"block",fontFamily:"'Fraunces',serif",fontSize:"28px",fontWeight:600,color:k.color,lineHeight:1}}>{k.val}</span>
+              <span style={{display:"block",fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",textTransform:"uppercase",letterSpacing:"0.05em",color:"#8a8568",marginTop:"4px"}}>{k.label}</span>
+              <span style={{display:"block",fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",color:"#9a9578",marginTop:"2px"}}>{fmtDateTime(last.ts)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {phase==="idle" && (
+        <div style={{display:"flex",gap:"8px",marginBottom:"24px"}}>
+          <label htmlFor="estufa-cam" style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:"6px",background:"#2F4A34",color:"#F4EFDE",borderRadius:"8px",padding:"13px",fontSize:"14px",fontWeight:600,cursor:"pointer",minHeight:"48px",fontFamily:"inherit"}}>
+            <Camera size={17} strokeWidth={2}/> Fotografar
+          </label>
+          <input id="estufa-cam" ref={camRef} type="file" accept="image/*" capture="environment" style={{position:"absolute",width:1,height:1,opacity:0,pointerEvents:"none"}} onChange={e=>handleFile(e.target.files?.[0])}/>
+          <label htmlFor="estufa-gal" style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:"6px",background:"#5c6b52",color:"#F4EFDE",borderRadius:"8px",padding:"13px",fontSize:"14px",fontWeight:600,cursor:"pointer",minHeight:"48px",fontFamily:"inherit"}}>
+            <Plus size={17} strokeWidth={2}/> Galeria
+          </label>
+          <input id="estufa-gal" ref={galRef} type="file" accept="image/*" style={{position:"absolute",width:1,height:1,opacity:0,pointerEvents:"none"}} onChange={e=>handleFile(e.target.files?.[0])}/>
+          <button onClick={()=>setPhase("manual")} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",background:"#F8F4E7",border:"1.5px solid #c7c4a8",color:"#4b5e42",borderRadius:"8px",padding:"13px",fontSize:"14px",fontWeight:600,cursor:"pointer",minHeight:"48px",fontFamily:"inherit"}}>
+            Manual
+          </button>
+        </div>
+      )}
+
+      {phase==="scanning" && (
+        <div style={{textAlign:"center",padding:"32px 20px",background:"#F8F4E7",border:"1px solid #d8d4bd",borderRadius:"8px",marginBottom:"24px",fontFamily:"'IBM Plex Mono',monospace",fontSize:"13px",color:"#6b7a5f"}}>
+          🔍 A analisar a imagem com IA...
+        </div>
+      )}
+
+      {(phase==="confirm"||phase==="manual") && (
+        <div style={{background:"#F8F4E7",border:"1px solid #d8d4bd",borderRadius:"8px",padding:"16px",marginBottom:"24px"}}>
+          {preview && <img src={preview} alt="Medidor" style={{width:"100%",maxHeight:"180px",objectFit:"contain",borderRadius:"6px",marginBottom:"14px",border:"1px solid #d8d4bd"}}/>}
+          {error && <p style={{fontSize:"12px",color:"#c0621e",margin:"0 0 10px",fontFamily:"'IBM Plex Mono',monospace"}}>{error}</p>}
+          {phase==="confirm" && !error && (
+            <p style={{fontSize:"12px",color:"#4b5e42",margin:"0 0 12px",fontFamily:"'IBM Plex Mono',monospace"}}>✓ Valores lidos automaticamente — confirma ou corrige:</p>
+          )}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px",marginBottom:"14px"}}>
+            {[{key:"temp",label:"Temperatura (°C)",emoji:"🌡️"},{key:"hum",label:"Humidade (%)",emoji:"💧"}].map(f=>(
+              <div key={f.key}>
+                <label style={{display:"block",fontFamily:"'IBM Plex Mono',monospace",fontSize:"10px",textTransform:"uppercase",letterSpacing:"0.05em",color:"#8a8568",marginBottom:"4px"}}>{f.emoji} {f.label}</label>
+                <input type="number" step="0.1" value={extracted[f.key]} onChange={e=>setExtracted(prev=>({...prev,[f.key]:e.target.value}))}
+                  style={{width:"100%",border:"1.5px solid #c7c4a8",borderRadius:"6px",padding:"10px",fontSize:"22px",fontFamily:"'Fraunces',serif",fontWeight:600,color:"#1f2e1a",background:"#fff",boxSizing:"border-box",textAlign:"center"}}/>
+              </div>
+            ))}
+          </div>
+          <div style={{display:"flex",gap:"8px"}}>
+            <button onClick={saveReading} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:"6px",background:"#2F4A34",color:"#F4EFDE",border:"none",borderRadius:"8px",padding:"12px",fontSize:"14px",fontWeight:600,cursor:"pointer",minHeight:"44px",fontFamily:"inherit"}}>
+              <Check size={16} strokeWidth={2}/> Guardar
+            </button>
+            <button onClick={cancel} style={{display:"flex",alignItems:"center",justifyContent:"center",background:"#F8F4E7",border:"1.5px solid #c7c4a8",color:"#6b7a5f",borderRadius:"8px",padding:"12px 14px",cursor:"pointer",minHeight:"44px"}}>
+              <X size={16} strokeWidth={2}/>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {chartData.length >= 2 && (
+        <div style={{marginBottom:"24px"}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"10px"}}>
+            <h2 style={{fontFamily:"'Fraunces',serif",fontSize:"17px",color:"#223420",margin:0}}>Histórico</h2>
+            <div style={{display:"flex",gap:"4px"}}>
+              {["24h","7d","30d"].map(r=>(
+                <button key={r} onClick={()=>setChartRange(r)} style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"11px",padding:"4px 10px",borderRadius:"12px",border:"1px solid #c7c4a8",background:chartRange===r?"#2F4A34":"transparent",color:chartRange===r?"#F4EFDE":"#5c6b52",cursor:"pointer"}}>
+                  {r}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div style={{background:"#F8F4E7",border:"1px solid #d8d4bd",borderRadius:"8px",padding:"12px 4px 4px"}}>
+            <ResponsiveContainer width="100%" height={200}>
+              <LineChart data={chartData} margin={{top:4,right:16,left:0,bottom:4}}>
+                <XAxis dataKey="label" tick={G} tickLine={false} axisLine={false} interval="preserveStartEnd"/>
+                <YAxis yAxisId="t" domain={["auto","auto"]} tick={G} tickLine={false} axisLine={false} width={34} unit="°"/>
+                <YAxis yAxisId="h" orientation="right" domain={[0,100]} tick={G} tickLine={false} axisLine={false} width={34} unit="%"/>
+                <Tooltip contentStyle={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"11px",background:"#F8F4E7",border:"1px solid #d8d4bd",borderRadius:"6px"}} labelStyle={{color:"#6b7a5f",marginBottom:"4px"}}/>
+                <Legend wrapperStyle={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"10px",paddingTop:"8px"}}/>
+                <Line yAxisId="t" type="monotone" dataKey="temp" name="Temp °C" stroke="#c0621e" strokeWidth={2} dot={{r:3,fill:"#c0621e"}} activeDot={{r:5}} connectNulls/>
+                <Line yAxisId="h" type="monotone" dataKey="hum" name="Humidade %" stroke="#2F4A34" strokeWidth={2} dot={{r:3,fill:"#2F4A34"}} activeDot={{r:5}} connectNulls/>
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+
+      {readings.length > 0 && (
+        <div>
+          <h2 style={{fontFamily:"'Fraunces',serif",fontSize:"17px",color:"#223420",margin:"0 0 10px"}}>Registos</h2>
+          <div style={{background:"#F8F4E7",border:"1px solid #d8d4bd",borderRadius:"8px",overflow:"hidden"}}>
+            {readings.slice(0,30).map((r,i)=>(
+              <div key={r.id} style={{display:"flex",alignItems:"center",gap:"10px",padding:"11px 14px",borderBottom:i<Math.min(readings.length,30)-1?"1px solid #ede9d5":"none"}}>
+                {r.photo && <img src={r.photo} alt="" style={{width:"40px",height:"40px",objectFit:"cover",borderRadius:"4px",border:"1px solid #d8d4bd",flexShrink:0}}/>}
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{display:"flex",gap:"12px",fontFamily:"'Fraunces',serif",fontSize:"15px",fontWeight:600,color:"#1f2e1a"}}>
+                    {r.temp!=null&&<span style={{color:"#c0621e"}}>{r.temp}°C</span>}
+                    {r.hum!=null&&<span style={{color:"#2F4A34"}}>{r.hum}%</span>}
+                  </div>
+                  <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"10px",color:"#9a9578",marginTop:"2px"}}>{fmtDateTime(r.ts)}</div>
+                </div>
+                <button onClick={()=>deleteReading(r.id)} style={{background:"none",border:"none",color:"#c0392b",cursor:"pointer",padding:"6px",display:"flex",minHeight:"36px",minWidth:"36px",alignItems:"center",justifyContent:"center"}}>
+                  <Trash2 size={13} strokeWidth={1.6}/>
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {readings.length===0 && phase==="idle" && (
+        <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:"10px",padding:"40px 20px",color:"#8a8568",textAlign:"center",border:"1px dashed #d3cfb4",borderRadius:"8px",background:"#F8F4E7"}}>
+          <Thermometer size={26} strokeWidth={1.3}/>
+          <p style={{fontSize:"13px",maxWidth:"260px",margin:0}}>Ainda sem leituras. Fotografa o ecrã do medidor para começar.</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Stock
+// ---------------------------------------------------------------------------
+function StockPage() {
+  const DEFAULTS={"siro-interior":{qty:2,order:false},"siro-turfa":{qty:2,order:false},"musgo-sphagnum":{qty:3,order:false},"argila-expandida":{qty:1,order:false},"siro-orquideas":{qty:1,order:false},"siro-perlite":{qty:1,order:false},"siro-decor-gold":{qty:1,order:false},"orchidpon":{qty:0,order:false}};
+  const [stock,setStock]=useState(()=>{const saved=loadStock();const merged={...DEFAULTS};Object.keys(saved).forEach(k=>{merged[k]=saved[k];});return merged;});
+  const update=(id,patch)=>setStock(prev=>{const next={...prev,[id]:{...prev[id],...patch}};saveStock(next);return next;});
+  const changeQty=(id,delta)=>update(id,{qty:Math.max(0,(stock[id]?.qty??0)+delta)});
+  const toggleOrder=(id)=>update(id,{order:!stock[id]?.order});
+  const toOrder=STOCK_ITEMS.filter(i=>stock[i.id]?.order);
+
+  return (
+    <div>
+      <header style={{marginBottom:"26px"}}>
+        <div style={{display:"inline-flex",alignItems:"center",gap:"6px",fontFamily:"'IBM Plex Mono',monospace",fontSize:"11px",letterSpacing:"0.08em",textTransform:"uppercase",color:"#6b7a5f",marginBottom:"8px"}}><Package size={13} strokeWidth={2}/> Substratos &amp; Materiais</div>
+        <h1 style={{fontFamily:"'Fraunces',serif",fontWeight:700,fontSize:"32px",color:"#1f2e1a",margin:"0 0 6px"}}>Stock</h1>
+        <p style={{fontSize:"13.5px",color:"#6b7a5f",margin:0,fontFamily:"'IBM Plex Mono',monospace"}}>Gerir quantidades e lista de encomenda</p>
+      </header>
+      {toOrder.length>0&&(<div style={{display:"flex",alignItems:"center",gap:"8px",background:"#fff8ec",border:"1.5px solid #e07b39",borderRadius:"8px",padding:"11px 14px",fontSize:"13px",color:"#c0621e",marginBottom:"20px",fontWeight:500}}><ShoppingCart size={15} strokeWidth={2}/><span>{toOrder.length} {toOrder.length===1?"item":"itens"} para encomendar: {toOrder.map(i=>i.name).join(", ")}</span></div>)}
+      <div style={{display:"flex",flexDirection:"column",background:"#F8F4E7",border:"1px solid #d8d4bd",borderRadius:"8px",overflow:"hidden"}}>
+        {STOCK_ITEMS.map((item,idx)=>{
+          const s=stock[item.id]||{qty:0,order:false};
+          const empty=s.qty===0,low=s.qty===1;
+          const bc=empty?"#c0392b":low?"#e0a339":"#c7c4a8";
+          return (
+            <div key={item.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px",gap:"12px",borderBottom:idx<STOCK_ITEMS.length-1?"1px solid #ede9d5":"none",background:s.order?"#fff8ec":"transparent"}}>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:"14px",fontWeight:600,color:"#223420",lineHeight:1.2}}>{item.name}</div>
+                <div style={{fontSize:"12px",color:"#6b7a5f",marginTop:"2px"}}>{item.note}</div>
+                {item.unitPrice&&<div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"11px",color:"#9a9578",marginTop:"3px"}}>€{item.unitPrice.toFixed(2)} / un.</div>}
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:"10px",flexShrink:0}}>
+                <div style={{display:"flex",alignItems:"center",border:`1.5px solid ${bc}`,borderRadius:"8px",overflow:"hidden"}}>
+                  <button onClick={()=>changeQty(item.id,-1)} disabled={s.qty===0} style={{background:"#eee9d8",border:"none",cursor:s.qty===0?"default":"pointer",padding:"7px 11px",fontSize:"16px",fontWeight:600,color:s.qty===0?"#c7c4a8":"#4b5e42",minHeight:"38px",minWidth:"36px",lineHeight:1}}>−</button>
+                  <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"15px",fontWeight:600,color:empty?"#c0392b":low?"#c07a20":"#1f2e1a",minWidth:"28px",textAlign:"center",padding:"0 2px"}}>{s.qty}</span>
+                  <button onClick={()=>changeQty(item.id,+1)} style={{background:"#eee9d8",border:"none",cursor:"pointer",padding:"7px 11px",fontSize:"16px",fontWeight:600,color:"#4b5e42",minHeight:"38px",minWidth:"36px",lineHeight:1}}>+</button>
+                </div>
+                <button onClick={()=>toggleOrder(item.id)} style={{background:s.order?"#e07b39":"#eee9d8",border:`1.5px solid ${s.order?"#e07b39":"#c7c4a8"}`,borderRadius:"8px",cursor:"pointer",padding:"8px 10px",color:s.order?"#fff":"#6b7a5f",display:"flex",alignItems:"center",minHeight:"38px"}}><ShoppingCart size={15} strokeWidth={2}/></button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <p style={{fontSize:"12px",color:"#9a9578",textAlign:"center",margin:"16px 0 0",lineHeight:1.5}}>Toca no carrinho para marcar para encomendar · Usa +/− para ajustar a quantidade</p>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Plantas
+// ---------------------------------------------------------------------------
+function Tag({children}){return <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"10.5px",letterSpacing:"0.04em",textTransform:"uppercase",color:"#4b5e42",background:"#e4e2cf",border:"1px solid #c7c4a8",borderRadius:"3px",padding:"2px 7px",display:"inline-block"}}>{children}</span>;}
+
+function PlantCard({plant,cover,dead,gifted,onOpen}){
+  const bg=dead?"#fdf6ee":gifted?"#f0f4ee":"#F8F4E7";
+  const border=dead?"2px solid #e07b39":gifted?"2px solid #5c9e6e":"1px solid #d8d4bd";
+  return(<button onClick={onOpen} style={{textAlign:"left",background:bg,border,borderRadius:"4px",padding:"10px 10px 8px",cursor:"pointer",display:"flex",flexDirection:"column",gap:"10px",fontFamily:"inherit",width:"100%",position:"relative"}}>
+    <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"8px",color:"#9a9578",letterSpacing:"0.05em"}}>Nº {plant.num}</div>
+    <div style={{height:"80px",borderRadius:"3px",background:"repeating-linear-gradient(135deg,#eee9d8,#eee9d8 6px,#e6e1cd 6px,#e6e1cd 12px)",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",position:"relative"}}>
+      {cover?<img src={cover} alt={plant.name} style={{width:"100%",height:"100%",objectFit:"cover",filter:dead?"grayscale(60%) opacity(0.8)":gifted?"opacity(0.85)":""}}/>:<Sprout size={30} strokeWidth={1.3} color={dead?"#b89a6a":gifted?"#5c9e6e":"#8FA07E"}/>}
+      {dead&&<span style={{position:"absolute",top:"6px",right:"6px",fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",textTransform:"uppercase",color:"#fff",background:"#e07b39",padding:"2px 6px",borderRadius:"3px"}}>🍂 Morta</span>}
+      {gifted&&!dead&&<span style={{position:"absolute",top:"6px",right:"6px",fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",textTransform:"uppercase",color:"#fff",background:"#5c9e6e",padding:"2px 6px",borderRadius:"3px"}}>🎁 Oferecida</span>}
+    </div>
+    <div>
+      <div style={{fontFamily:"'Fraunces',serif",fontSize:"13px",fontWeight:600,color:"#223420",margin:"0 0 4px",lineHeight:1.2}}>{plant.name}</div>
+      <div style={{display:"flex",gap:"6px",fontSize:"10px",color:"#5c6b52",marginBottom:"6px",flexWrap:"wrap"}}>
+        <span style={{display:"flex",alignItems:"center",gap:"4px"}}><Sun size={10} strokeWidth={2}/>{lightGroup(plant.light)}</span>
+        <span style={{display:"flex",alignItems:"center",gap:"4px"}}><Droplet size={10} strokeWidth={2}/>{plant.watering.split("(")[0].trim()}</span>
+      </div>
+      <div style={{display:"flex",justifyContent:"space-between",fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",color:"#8a8568",borderTop:"1px dashed #d3cfb4",paddingTop:"6px"}}><span>{plant.store}</span><span>{fmtDate(plant.date)}</span></div>
+    </div>
+  </button>);
+}
+
+function Timeline({entries,onDelete}){
+  if(!entries.length)return(<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:"8px",padding:"34px 20px",color:"#8a8568",textAlign:"center",border:"1px dashed #d3cfb4",borderRadius:"4px",background:"#F8F4E7"}}><Camera size={22} strokeWidth={1.3}/><p style={{fontSize:"13px",maxWidth:"260px",margin:0}}>Ainda sem fotos registadas.</p></div>);
+  return(<div style={{display:"flex",flexDirection:"column"}}>{entries.map((e,i)=>(<div key={e.id} style={{display:"flex",gap:"14px"}}><div style={{display:"flex",flexDirection:"column",alignItems:"center",width:"14px"}}><div style={{width:"9px",height:"9px",borderRadius:"50%",background:"#4b5e42",marginTop:"6px",flexShrink:0}}/>{i<entries.length-1&&<div style={{flex:1,width:"1px",background:"#d3cfb4",margin:"4px 0"}}/>}</div><div style={{flex:1,paddingBottom:i<entries.length-1?"22px":"8px"}}><img src={e.dataUrl} alt="" style={{width:"100%",maxWidth:"340px",borderRadius:"4px",border:"1px solid #d8d4bd",display:"block"}}/><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",maxWidth:"340px",marginTop:"6px"}}><span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"11px",color:"#5c6b52"}}>{fmtDate(e.date)}</span><button onClick={()=>onDelete(e.id)} style={{background:"#fdf0ee",border:"1px solid #e8c4bc",borderRadius:"6px",color:"#c0392b",cursor:"pointer",padding:"8px",display:"flex",minHeight:"40px",minWidth:"40px",alignItems:"center",justifyContent:"center"}}><Trash2 size={13} strokeWidth={1.6}/></button></div>{e.note&&<p style={{fontSize:"13px",color:"#3c4536",margin:"6px 0 0",maxWidth:"340px",lineHeight:1.4}}>{e.note}</p>}</div></div>))}</div>);
+}
+
+
+function PictureThisLink({url}) {
+  const [open, setOpen] = useState(false);
+  const inputRef = useRef(null);
+  const handleOpen = () => {
+    setOpen(true);
+    setTimeout(() => { if(inputRef.current){ inputRef.current.select(); inputRef.current.focus(); } }, 100);
+  };
+  return (
+    <>
+      <button onClick={handleOpen} style={{display:"inline-flex",alignItems:"center",gap:"4px",fontFamily:"'IBM Plex Mono',monospace",fontSize:"10.5px",letterSpacing:"0.04em",textTransform:"uppercase",color:"#3a7a52",background:"#f0f4ee",border:"1px solid #93a97f",borderRadius:"3px",padding:"2px 7px",cursor:"pointer"}}>
+        ↗ PictureThis
+      </button>
+      {open&&(
+        <div onClick={()=>setOpen(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.55)",zIndex:100,display:"flex",alignItems:"center",justifyContent:"center",padding:"20px"}}>
+          <div onClick={e=>e.stopPropagation()} style={{background:"#F8F4E7",borderRadius:"10px",padding:"24px",maxWidth:"420px",width:"100%",boxShadow:"0 8px 32px rgba(0,0,0,0.18)"}}>
+            <div style={{fontFamily:"'Fraunces',serif",fontSize:"18px",fontWeight:600,color:"#1f2e1a",marginBottom:"8px"}}>PictureThis</div>
+            <p style={{fontSize:"12px",color:"#6b7a5f",fontFamily:"'IBM Plex Mono',monospace",marginBottom:"12px",lineHeight:1.5}}>Selecciona o link, copia e abre no browser:</p>
+            <input
+              ref={inputRef}
+              readOnly
+              value={url}
+              onFocus={e=>e.target.select()}
+              onClick={e=>e.target.select()}
+              style={{width:"100%",background:"#eee9d8",border:"1.5px solid #93a97f",borderRadius:"6px",padding:"10px 12px",fontSize:"11px",fontFamily:"'IBM Plex Mono',monospace",color:"#2c3826",boxSizing:"border-box",marginBottom:"16px"}}
+            />
+            <button onClick={()=>setOpen(false)} style={{width:"100%",background:"#2F4A34",color:"#F4EFDE",border:"none",borderRadius:"8px",padding:"12px",fontSize:"13px",fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+function PlantDetail({plant,onBack,onPhotoSaved,onDeadToggle,onGiftedToggle}){
+  const[entries,setEntries]=useState([]);const[loading,setLoading]=useState(true);const[dead,setDead]=useState(()=>{try{return localStorage.getItem("dead:"+plant.id)==="1";}catch{return false;}});const[gifted,setGifted]=useState(()=>{try{return localStorage.getItem("gifted:"+plant.id)==="1";}catch{return false;}});const[pendingNote,setPendingNote]=useState("");const[busy,setBusy]=useState(false);const fileRef=useRef(null);const key="photos:"+plant.id;
+  const toggleDead=()=>{const next=!dead;setDead(next);try{localStorage.setItem("dead:"+plant.id,next?"1":"0");}catch{}if(onDeadToggle)onDeadToggle(plant.id,next);};
+  const toggleGifted=()=>{const next=!gifted;setGifted(next);try{localStorage.setItem("gifted:"+plant.id,next?"1":"0");}catch{}if(onGiftedToggle)onGiftedToggle(plant.id,next);};
+  useEffect(()=>{let c=false;setLoading(true);store.get(key).then(r=>{if(!c)setEntries(r||[]);}).catch(()=>{if(!c)setEntries([]);}).finally(()=>!c&&setLoading(false));return()=>(c=true);},[key]);
+  const persist=async(next)=>{setEntries(next);try{await store.set(key,next);}catch(e){console.error(e);}};
+  const handleFile=async(file)=>{if(!file)return;setBusy(true);try{const dataUrl=await compressImage(file);const entry={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),dataUrl,date:new Date().toISOString().slice(0,10),note:pendingNote.trim()};const next=[...entries,entry].sort((a,b)=>a.date.localeCompare(b.date));await persist(next);setPendingNote("");if(onPhotoSaved)onPhotoSaved(plant.id,dataUrl);}catch(e){console.error(e);}finally{setBusy(false);if(fileRef.current)fileRef.current.value="";}};
+  const handleDelete=async(id)=>await persist(entries.filter(e=>e.id!==id));
+
+  return(<div style={{maxWidth:"620px",margin:"0 auto"}}>
+    <button onClick={onBack} style={{display:"inline-flex",alignItems:"center",gap:"6px",background:"none",border:"none",color:"#4b5e42",fontFamily:"'IBM Plex Mono',monospace",fontSize:"13px",cursor:"pointer",padding:"8px 0",margin:"-8px 0 14px",minHeight:"40px"}}><ArrowLeft size={15} strokeWidth={2}/> Todas as plantas</button>
+    <div style={{marginBottom:"20px"}}>
+      <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"11px",color:"#9a9578",letterSpacing:"0.05em",marginBottom:"4px"}}>Espécime Nº {plant.num}</div>
+      <h1 style={{fontFamily:"'Fraunces',serif",fontSize:"30px",fontWeight:600,color:"#1f2e1a",margin:"0 0 12px",lineHeight:1.15}}>{plant.name}</h1>
+      <div style={{display:"flex",gap:"6px",flexWrap:"wrap",marginBottom:"14px"}}><Tag>{plant.store}</Tag><Tag>{fmtDate(plant.date)}</Tag><Tag>€{plant.price.toFixed(2)}</Tag>{plant.url&&<PictureThisLink url={plant.url}/>}</div>
+      <div style={{display:"flex",gap:"8px",flexWrap:"wrap",marginBottom:"18px"}}>
+      <button onClick={toggleDead} style={{display:"inline-flex",alignItems:"center",gap:"6px",background:dead?"#e07b39":"none",border:"1.5px solid #e07b39",color:dead?"#fff":"#c0621e",borderRadius:"20px",padding:"7px 14px",fontSize:"13px",fontWeight:600,cursor:"pointer",fontFamily:"inherit",minHeight:"40px"}}>{dead?"🌱 Marcar como viva":"🍂 Marcar como morta"}</button>
+      <button onClick={toggleGifted} style={{display:"inline-flex",alignItems:"center",gap:"6px",background:gifted?"#5c9e6e":"none",border:"1.5px solid #5c9e6e",color:gifted?"#fff":"#3a7a52",borderRadius:"20px",padding:"7px 14px",fontSize:"13px",fontWeight:600,cursor:"pointer",fontFamily:"inherit",minHeight:"40px"}}>{gifted?"↩️ Desfazer oferta":"🎁 Marcar como oferecida"}</button>
+    </div>
+    </div>
+    <div style={{background:"#F8F4E7",border:"1px solid #d8d4bd",borderRadius:"4px",padding:"16px 18px",display:"flex",flexDirection:"column",gap:"14px",marginBottom:"24px"}}>
+      {[{icon:<Sun size={15} strokeWidth={1.8}/>,label:"Luz",val:plant.light},{icon:<Droplet size={15} strokeWidth={1.8}/>,label:"Rega",val:plant.watering},{icon:<Sprout size={15} strokeWidth={1.8}/>,label:"Substrato",val:plant.soil},{icon:<Wind size={15} strokeWidth={1.8}/>,label:"Humidade",val:plant.humidity},{icon:<Thermometer size={15} strokeWidth={1.8}/>,label:"Temperatura",val:plant.tempRange},{icon:<Leaf size={15} strokeWidth={1.8}/>,label:"Observações",val:plant.notes}].filter(r=>r.val).map(r=>(<div key={r.label} style={{display:"flex",gap:"10px",alignItems:"flex-start",color:"#4b5e42"}}><div style={{marginTop:"3px",flexShrink:0}}>{r.icon}</div><div><span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"10.5px",textTransform:"uppercase",letterSpacing:"0.05em",color:"#8a8568",display:"block",marginBottom:"2px"}}>{r.label}</span><p style={{margin:0,fontSize:"13.5px",color:"#2c3826",lineHeight:1.4}}>{r.val}</p></div></div>))}
+    </div>
+    <h2 style={{fontFamily:"'Fraunces',serif",fontSize:"17px",color:"#223420",margin:"0 0 14px"}}>Evolução registada</h2>
+    {loading?<p style={{color:"#8a8568",fontSize:"13px"}}>A carregar...</p>:<Timeline entries={entries} onDelete={handleDelete}/>}
+    <div style={{height:"160px"}}/>
+    <div style={{display:"flex",flexDirection:"column",gap:"8px",position:"fixed",left:0,right:0,bottom:0,zIndex:20,background:"#EDE6D6",borderTop:"1px solid #d8d4bd",padding:"10px 12px 16px",boxShadow:"0 -6px 16px -8px rgba(31,46,26,0.25)"}}>
+      <input type="text" placeholder="Nota para esta foto (opcional)..." value={pendingNote} onChange={e=>setPendingNote(e.target.value)} style={{border:"1px solid #d8d4bd",borderRadius:"4px",padding:"10px 11px",fontSize:"16px",fontFamily:"inherit",background:"#fff",width:"100%",boxSizing:"border-box"}}/>
+      <div style={{display:"flex",gap:"8px",width:"100%"}}>
+        <label htmlFor={`cam-${plant.id}`} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:"5px",background:"#2F4A34",color:"#F4EFDE",borderRadius:"8px",padding:"12px 8px",fontSize:"14px",fontWeight:600,cursor:"pointer",minHeight:"48px",opacity:busy?0.6:1,pointerEvents:busy?"none":"auto"}}><Camera size={17} strokeWidth={2}/>{busy?"A guardar...":"Câmara"}</label>
+        <input id={`cam-${plant.id}`} type="file" accept="image/*" capture="environment" disabled={busy} style={{position:"absolute",width:1,height:1,opacity:0,pointerEvents:"none"}} onChange={e=>handleFile(e.target.files?.[0])}/>
+        <label htmlFor={`gal-${plant.id}`} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:"5px",background:"#5c6b52",color:"#F4EFDE",borderRadius:"8px",padding:"12px 8px",fontSize:"14px",fontWeight:600,cursor:"pointer",minHeight:"48px",opacity:busy?0.6:1,pointerEvents:busy?"none":"auto"}}><Plus size={17} strokeWidth={2}/>{busy?"A guardar...":"Galeria"}</label>
+        <input id={`gal-${plant.id}`} ref={fileRef} type="file" accept="image/*" disabled={busy} style={{position:"absolute",width:1,height:1,opacity:0,pointerEvents:"none"}} onChange={e=>handleFile(e.target.files?.[0])}/>
+      </div>
+    </div>
+  </div>);
+}
+
+// ---------------------------------------------------------------------------
+// App principal
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Página de Definições — Gemini API key
+// ---------------------------------------------------------------------------
+function SettingsPage() {
+  const [key, setKey] = useState(() => {
+    try { return localStorage.getItem("gemini-api-key") || ""; } catch { return ""; }
+  });
+  const [saved, setSaved] = useState(false);
+
+  const save = () => {
+    try {
+      localStorage.setItem("gemini-api-key", key.trim());
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch(e) { console.error(e); }
+  };
+
+  const hasKey = key.trim().length > 0;
+
+  return (
+    <div>
+      <header style={{marginBottom:"26px"}}>
+        <div style={{display:"inline-flex",alignItems:"center",gap:"6px",fontFamily:"'IBM Plex Mono',monospace",fontSize:"11px",letterSpacing:"0.08em",textTransform:"uppercase",color:"#6b7a5f",marginBottom:"8px"}}>
+          ⚙️ Configuração
+        </div>
+        <h1 style={{fontFamily:"'Fraunces',serif",fontWeight:700,fontSize:"32px",color:"#1f2e1a",margin:"0 0 6px"}}>Definições</h1>
+        <p style={{fontSize:"13.5px",color:"#6b7a5f",margin:0,fontFamily:"'IBM Plex Mono',monospace"}}>Configuração da API de IA</p>
+      </header>
+
+      <div style={{background:"#F8F4E7",border:"1px solid #d8d4bd",borderRadius:"8px",padding:"20px",marginBottom:"16px"}}>
+        <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"12px"}}>
+          <div style={{width:"10px",height:"10px",borderRadius:"50%",background:hasKey?"#5c9e6e":"#e07b39",flexShrink:0}}/>
+          <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"12px",color:hasKey?"#3a7a52":"#c0621e",fontWeight:600}}>
+            {hasKey ? "Gemini API key configurada ✓" : "API key não configurada"}
+          </span>
+        </div>
+
+        <p style={{fontSize:"13px",color:"#5c6b52",margin:"0 0 16px",lineHeight:1.6}}>
+          A key do Gemini é necessária para identificar plantas por foto e ler o medidor de temperatura. É gratuita e guardada apenas no teu dispositivo.
+        </p>
+
+        <label style={{display:"block",fontFamily:"'IBM Plex Mono',monospace",fontSize:"10px",textTransform:"uppercase",letterSpacing:"0.05em",color:"#8a8568",marginBottom:"6px"}}>
+          Gemini API Key
+        </label>
+        <input
+          type="password"
+          value={key}
+          onChange={e => { setKey(e.target.value); setSaved(false); }}
+          placeholder="AIza..."
+          style={{width:"100%",border:"1.5px solid #d8d4bd",borderRadius:"6px",padding:"10px 12px",
+            fontSize:"15px",fontFamily:"'IBM Plex Mono',monospace",background:"#fff",
+            boxSizing:"border-box",color:"#223420",marginBottom:"12px"}}
+        />
+
+        <button onClick={save} style={{width:"100%",background:saved?"#5c9e6e":"#2F4A34",color:"#F4EFDE",
+          border:"none",borderRadius:"8px",padding:"12px",fontSize:"14px",fontWeight:600,
+          cursor:"pointer",fontFamily:"inherit",transition:"background 0.2s"}}>
+          {saved ? "✓ Guardada!" : "Guardar key"}
+        </button>
+      </div>
+
+      <div style={{background:"#F8F4E7",border:"1px solid #d8d4bd",borderRadius:"8px",padding:"16px"}}>
+        <div style={{fontFamily:"'Fraunces',serif",fontSize:"15px",fontWeight:600,color:"#223420",marginBottom:"8px"}}>
+          Como obter a key gratuita
+        </div>
+        <ol style={{margin:0,padding:"0 0 0 18px",display:"flex",flexDirection:"column",gap:"8px",fontSize:"13px",color:"#5c6b52",lineHeight:1.5}}>
+          <li>Vai a <strong>aistudio.google.com</strong></li>
+          <li>Clica em <strong>"Get API key"</strong> → <strong>"Create API key"</strong></li>
+          <li>Copia a key e cola aqui em cima</li>
+        </ol>
+        <p style={{fontSize:"12px",color:"#9a9578",margin:"12px 0 0",fontFamily:"'IBM Plex Mono',monospace",lineHeight:1.5}}>
+          Tier gratuito: 15 pedidos/min · 1500/dia · sem cartão de crédito
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [query,setQuery]=useState("");
+  const [filter,setFilter]=useState("Todas");
+  const [selected,setSelected]=useState(null);
+  const [showAdd,setShowAdd]=useState(false);
+  const [customPlants,setCustomPlants]=useState(()=>loadCustomPlants());
+  const scrollPos=useRef(0);
+  const [page,setPage]=useState(() => { try { return localStorage.getItem("gemini-api-key") ? "plants" : "settings"; } catch { return "plants"; } });
+  const [covers,setCovers]=useState(()=>loadCoversSync());
+  const [deadMap,setDeadMap]=useState(()=>{const m={};PLANTS.forEach(p=>{try{m[p.id]=localStorage.getItem("dead:"+p.id)==="1";}catch{m[p.id]=false;}});return m;});
+  const [giftedMap,setGiftedMap]=useState(()=>{const m={};PLANTS.forEach(p=>{try{m[p.id]=localStorage.getItem("gifted:"+p.id)==="1";}catch{m[p.id]=false;}});return m;});
+
+  const loadCovers=async()=>{const all=[...PLANTS,...customPlants];const entries=await Promise.all(all.map(async p=>{try{const arr=await store.get("photos:"+p.id);return[p.id,arr&&arr.length?arr[arr.length-1].dataUrl:null];}catch{return[p.id,null];}}));setCovers(Object.fromEntries(entries));};
+  useEffect(()=>{let c=false;if(!c)loadCovers();return()=>(c=true);},[selected]);
+
+  const allPlants=useMemo(()=>[...PLANTS,...customPlants].sort((a,b)=>a.name.localeCompare(b.name,'pt-PT',{sensitivity:'base'})),[customPlants]);
+  const filtered=useMemo(()=>allPlants.filter(p=>{const mg=filter==="Todas"||(filter==="Oferecidas"?giftedMap[p.id]:lightGroup(p.light)===filter);const q=query.trim().toLowerCase();return mg&&(!q||p.name.toLowerCase().includes(q)||p.store.toLowerCase().includes(q));}),[query,filter,giftedMap]);
+
+  const activePlant=selected?allPlants.find(p=>p.id===selected):null;
+
+  const stats=useMemo(()=>{
+    const all=allPlants;const alive=all.filter(p=>!deadMap[p.id]&&!giftedMap[p.id]);
+    const dead=all.filter(p=>deadMap[p.id]);
+    const gifted=all.filter(p=>giftedMap[p.id]&&!deadMap[p.id]);
+    const withPhotos=all.filter(p=>covers[p.id]);
+    const byStore={},byLight={"Muita luz":0,"Luz indireta":0,"Pouca luz":0},bySoil={},byFamily={},spendByStore={},byMonth={},byHumidity={},byTemp={};
+    PLANTS.forEach(p=>{
+      byStore[p.store]=(byStore[p.store]||0)+1;
+      byLight[lightGroup(p.light)]++;
+      const sl=p.soil||"Não definido"; bySoil[sl]=(bySoil[sl]||0)+1;
+      const fam=p.name.split(" ")[0].replace(/['"]/g,""); byFamily[fam]=(byFamily[fam]||0)+1;
+      spendByStore[p.store]=(spendByStore[p.store]||0)+p.price;
+      const m=p.date.slice(0,7); byMonth[m]=(byMonth[m]||0)+1;
+      if(p.humidity){byHumidity[p.humidity]=(byHumidity[p.humidity]||0)+1;}
+      if(p.tempRange){byTemp[p.tempRange]=(byTemp[p.tempRange]||0)+1;}
+    });
+    const topFamilies=Object.entries(byFamily).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    return{alive,dead,gifted,withPhotos,byStore,byLight,bySoil,topFamilies,spendByStore,byMonth,byHumidity,byTemp};
+  },[deadMap,giftedMap,covers,allPlants]);
+
+  const BAR_MAX=stats.topFamilies.length?Math.max(...stats.topFamilies.map(f=>f[1])):1;
+
+  const NAV=[
+    {id:"plants",icon:<Sprout size={20} strokeWidth={1.7}/>,label:"Plantas"},
+    {id:"stock",icon:<Package size={20} strokeWidth={1.7}/>,label:"Stock"},
+    {id:"estufa",icon:<Thermometer size={20} strokeWidth={1.7}/>,label:"Estufa"},
+    {id:"stats",icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>,label:"Stats"},
+    {id:"settings",icon:<Settings size={20} strokeWidth={1.7}/>,label:"Config"},
+  ];
+
+  return(
+    <div style={{minHeight:"100vh",background:"#EDE6D6",backgroundImage:"radial-gradient(circle at 1px 1px,rgba(75,94,66,0.07) 1px,transparent 0)",backgroundSize:"22px 22px",fontFamily:"'Inter',sans-serif",padding:"max(20px,env(safe-area-inset-top)) 16px calc(68px + env(safe-area-inset-bottom))"}}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}html,body{overscroll-behavior-y:contain;}`}</style>
+      <div style={{maxWidth:"1040px",margin:"0 auto"}}>
+
+        {activePlant?(
+          <PlantDetail plant={activePlant} onBack={()=>{setSelected(null);requestAnimationFrame(()=>window.scrollTo(0,scrollPos.current));}} onPhotoSaved={(id,dataUrl)=>setCovers(prev=>({...prev,[id]:dataUrl}))} onDeadToggle={(id,val)=>setDeadMap(prev=>({...prev,[id]:val}))} onGiftedToggle={(id,val)=>setGiftedMap(prev=>({...prev,[id]:val}))}/>
+
+        ):page==="settings"?(<SettingsPage/>):page==="stock"?(<StockPage/>
+
+        ):page==="estufa"?(<EstufaPage/>
+
+        ):page==="stats"?(
+          <>
+            <header style={{marginBottom:"26px"}}>
+              <div style={{display:"inline-flex",alignItems:"center",gap:"6px",fontFamily:"'IBM Plex Mono',monospace",fontSize:"11px",letterSpacing:"0.08em",textTransform:"uppercase",color:"#6b7a5f",marginBottom:"8px"}}><Leaf size={13} strokeWidth={2}/> Estatísticas</div>
+              <h1 style={{fontFamily:"'Fraunces',serif",fontWeight:700,fontSize:"32px",color:"#1f2e1a",margin:"0 0 6px"}}>A Minha Coleção</h1>
+            </header>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:"8px",marginBottom:"28px"}}>
+              {[{v:PLANTS.length,l:"Total"},{v:stats.alive.length,l:"Vivas"},{v:stats.dead.length,l:"Mortas",color:"#c0621e",bg:"#fdf6ee",border:"#e07b39"},{v:stats.gifted.length,l:"Oferecidas",color:"#3a7a52",bg:"#f0f4ee",border:"#5c9e6e"},{v:`€${TOTAL.toFixed(0)}`,l:"Investimento"},{v:`€${(TOTAL/PLANTS.length).toFixed(2)}`,l:"Custo médio"},{v:stats.withPhotos.length,l:"Com fotos"}].map(k=>(<div key={k.l} style={{background:k.bg||"#F8F4E7",border:`1px solid ${k.border||"#d8d4bd"}`,borderRadius:"8px",padding:"12px 6px",textAlign:"center"}}><span style={{display:"block",fontFamily:"'Fraunces',serif",fontSize:"20px",fontWeight:600,color:k.color||"#1f2e1a",lineHeight:1}}>{k.v}</span><span style={{display:"block",fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",textTransform:"uppercase",letterSpacing:"0.05em",color:"#8a8568",marginTop:"5px"}}>{k.l}</span></div>))}
+            </div>
+            {[
+              {title:"Famílias mais representadas",content:(<div style={{display:"flex",flexDirection:"column",gap:"8px"}}>{stats.topFamilies.map(([fam,count])=>(<div key={fam} style={{display:"flex",alignItems:"center",gap:"10px"}}><span style={{fontSize:"13px",color:"#2c3826",width:"100px",flexShrink:0,fontWeight:500}}>{fam}</span><div style={{flex:1,height:"10px",background:"#e4e2cf",borderRadius:"5px",overflow:"hidden"}}><div style={{height:"100%",background:"#4b5e42",borderRadius:"5px",width:`${(count/BAR_MAX)*100}%`}}/></div><span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"11px",color:"#5c6b52",width:"18px",textAlign:"right"}}>{count}</span></div>))}</div>)},
+              {title:"Necessidade de luz",pill:Object.entries(stats.byLight).map(([l,c])=>({l,c}))},
+              {title:"Substrato recomendado",pill:Object.entries(stats.bySoil).sort((a,b)=>b[1]-a[1]).map(([l,c])=>({l,c}))},
+              {title:"Plantas por loja",pillExtra:Object.entries(stats.byStore).sort((a,b)=>b[1]-a[1]).map(([l,c])=>({l,c,extra:`€${stats.spendByStore[l].toFixed(2)}`}))},
+              {title:"Aquisições por mês",pill:Object.entries(stats.byMonth).sort().map(([m,c])=>({l:new Date(m+"-01T00:00:00").toLocaleDateString("pt-PT",{month:"long",year:"numeric"}),c,cap:true}))},
+              {title:"Humidade recomendada",pill:Object.entries(stats.byHumidity).sort((a,b)=>a[0].localeCompare(b[0])).map(([l,c])=>({l,c}))},
+              {title:"Temperatura recomendada",pill:Object.entries(stats.byTemp).sort((a,b)=>a[0].localeCompare(b[0])).map(([l,c])=>({l,c}))},
+            ].map(s=>(<div key={s.title} style={{marginBottom:"26px"}}><h2 style={{fontFamily:"'Fraunces',serif",fontSize:"17px",color:"#223420",margin:"0 0 12px"}}>{s.title}</h2>{s.content||<div style={{background:"#F8F4E7",border:"1px solid #d8d4bd",borderRadius:"8px",overflow:"hidden"}}>{(s.pill||s.pillExtra||[]).map((r,i,arr)=>(<div key={r.l} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"11px 14px",borderBottom:i<arr.length-1?"1px solid #ede9d5":"none",fontSize:"13.5px",color:"#2c3826",gap:"12px"}}><span style={r.cap?{textTransform:"capitalize"}:{}}>{r.l}</span><div style={{display:"flex",gap:"8px",alignItems:"center"}}>{r.extra&&<span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"11px",color:"#8a8568"}}>{r.extra}</span>}<span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"11px",background:"#2F4A34",color:"#F4EFDE",borderRadius:"12px",padding:"2px 8px",flexShrink:0}}>{r.c}</span></div></div>))}</div>}</div>))}
+            <div style={{height:"16px"}}/>
+          </>
+
+        ):(
+          <>
+            <header style={{marginBottom:"20px"}}>
+              <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:"12px"}}>
+                <div>
+                  <div style={{display:"inline-flex",alignItems:"center",gap:"6px",fontFamily:"'IBM Plex Mono',monospace",fontSize:"11px",letterSpacing:"0.08em",textTransform:"uppercase",color:"#6b7a5f",marginBottom:"8px"}}><Leaf size={13} strokeWidth={2}/> Diário &amp; Tracking</div>
+                  <h1 style={{fontFamily:"'Fraunces',serif",fontWeight:700,fontSize:"32px",color:"#1f2e1a",margin:"0 0 6px"}}>As Minhas Plantas</h1>
+                  <p style={{fontSize:"13.5px",color:"#6b7a5f",margin:0,fontFamily:"'IBM Plex Mono',monospace"}}>Coleção de {allPlants.length} espécimes · Total investido €{(TOTAL+customPlants.reduce((a,p)=>a+p.price,0)).toFixed(2)}</p>
+                </div>
+                <button onClick={()=>setShowAdd(true)} style={{flexShrink:0,display:"flex",alignItems:"center",gap:"6px",background:"#2F4A34",color:"#F4EFDE",border:"none",borderRadius:"8px",padding:"10px 14px",fontSize:"13px",fontWeight:600,cursor:"pointer",minHeight:"44px",fontFamily:"inherit",marginTop:"6px"}}>
+                  <Plus size={16} strokeWidth={2}/> Adicionar
+                </button>
+              </div>
+            </header>
+            <div style={{display:"flex",flexDirection:"column",gap:"12px",marginBottom:"22px"}}>
+              <div style={{display:"flex",alignItems:"center",gap:"8px",background:"#F8F4E7",border:"1px solid #d8d4bd",borderRadius:"8px",padding:"11px 12px",maxWidth:"340px",color:"#6b7a5f"}}><Search size={14} strokeWidth={2}/><input type="text" placeholder="Procurar por nome ou loja..." value={query} onChange={e=>setQuery(e.target.value)} style={{border:"none",background:"none",outline:"none",fontSize:"16px",width:"100%",fontFamily:"inherit",color:"#223420"}}/></div>
+              <div style={{display:"flex",gap:"7px",flexWrap:"wrap"}}>
+                {["Todas","Muita luz","Luz indireta","Pouca luz","Oferecidas"].map(g=>(<button key={g} onClick={()=>setFilter(g)} style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"11.5px",letterSpacing:"0.02em",background:filter===g?"#2F4A34":"transparent",border:`1px solid ${filter===g?"#2F4A34":"#c7c4a8"}`,color:filter===g?"#F4EFDE":"#5c6b52",borderRadius:"20px",padding:"8px 14px",cursor:"pointer",minHeight:"36px"}}>{g}</button>))}
+              </div>
+            </div>
+            {filtered.length===0?<p style={{color:"#8a8568",fontSize:"13px"}}>Nenhuma planta encontrada.</p>:(
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px"}}>
+                {filtered.map(p=><PlantCard key={p.id} plant={p} cover={covers[p.id]} dead={deadMap[p.id]} gifted={giftedMap[p.id]} onOpen={()=>{scrollPos.current=window.scrollY;window.scrollTo(0,0);setSelected(p.id);}}/>)}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {showAdd&&<AddPlantModal onClose={()=>setShowAdd(false)} onSave={(plant)=>{const next=[...customPlants,plant];setCustomPlants(next);saveCustomPlants(next);setShowAdd(false);}}/>}
+      {!activePlant&&(
+        <nav style={{position:"fixed",left:0,right:0,bottom:0,zIndex:30,background:"#F8F4E7",borderTop:"1px solid #d8d4bd",display:"flex",padding:"6px 0 calc(6px + env(safe-area-inset-bottom))"}}>
+          {NAV.map(btn=>(<button key={btn.id} onClick={()=>setPage(btn.id)} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:"2px",background:"none",border:"none",cursor:"pointer",color:page===btn.id?"#2F4A34":"#8a8568",fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",letterSpacing:"0.04em",textTransform:"uppercase",padding:"5px 0"}}>{btn.icon}<span>{btn.label}</span></button>))}
+        </nav>
+      )}
+    </div>
+  );
+}
+
+
+ReactDOM.createRoot(document.getElementById('root')).render(createElement(App));
+}
+</script>
+</body>
+</html>
